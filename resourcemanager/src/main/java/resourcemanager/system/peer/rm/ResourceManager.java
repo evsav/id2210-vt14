@@ -7,11 +7,7 @@ import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
 import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +33,7 @@ import tman.system.peer.tman.TManSamplePort;
 public final class ResourceManager extends ComponentDefinition {
 
     private static final Logger logger = LoggerFactory.getLogger(ResourceManager.class);
+
     Positive<RmPort> indexPort = positive(RmPort.class);
     Positive<Network> networkPort = positive(Network.class);
     Positive<Timer> timerPort = positive(Timer.class);
@@ -44,10 +41,14 @@ public final class ResourceManager extends ComponentDefinition {
     Positive<CyclonSamplePort> cyclonSamplePort = positive(CyclonSamplePort.class);
     Positive<TManSamplePort> tmanPort = positive(TManSamplePort.class);
     ArrayList<Address> neighbours = new ArrayList<Address>();
+
     private Address self;
     private RmConfiguration configuration;
     Random random;
     private AvailableResources availableResources;
+    
+    private final int PROBES = 2;
+
     Comparator<PeerDescriptor> peerAgeComparator = new Comparator<PeerDescriptor>() {
         @Override
         public int compare(PeerDescriptor t, PeerDescriptor t1) {
@@ -59,7 +60,6 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
-	
     public ResourceManager() {
 
         subscribe(handleInit, control);
@@ -70,7 +70,7 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleResourceAllocationResponse, networkPort);
         subscribe(handleTManSample, tmanPort);
     }
-	
+
     Handler<RmInit> handleInit = new Handler<RmInit>() {
         @Override
         public void handle(RmInit init) {
@@ -84,10 +84,8 @@ public final class ResourceManager extends ComponentDefinition {
             rst.setTimeoutEvent(new UpdateTimeout(rst));
             trigger(rst, timerPort);
 
-
         }
     };
-
 
     Handler<UpdateTimeout> handleUpdateTimeout = new Handler<UpdateTimeout>() {
         @Override
@@ -100,11 +98,8 @@ public final class ResourceManager extends ComponentDefinition {
                 return;
             }
             Address dest = neighbours.get(random.nextInt(neighbours.size()));
-
-
         }
     };
-
 
     Handler<RequestResources.Request> handleResourceAllocationRequest = new Handler<RequestResources.Request>() {
         @Override
@@ -112,36 +107,55 @@ public final class ResourceManager extends ComponentDefinition {
             // TODO 
         }
     };
+    
     Handler<RequestResources.Response> handleResourceAllocationResponse = new Handler<RequestResources.Response>() {
         @Override
         public void handle(RequestResources.Response event) {
             // TODO 
         }
     };
+    
     Handler<CyclonSample> handleCyclonSample = new Handler<CyclonSample>() {
         @Override
         public void handle(CyclonSample event) {
             System.out.println("Received samples: " + event.getSample().size());
-            
+
             // receive a new list of neighbours
             neighbours.clear();
             neighbours.addAll(event.getSample());
 
         }
     };
-	
+
     Handler<RequestResource> handleRequestResource = new Handler<RequestResource>() {
         @Override
         public void handle(RequestResource event) {
-            
+
             System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
-            // TODO: Ask for resources from neighbours
-            // by sending a ResourceRequest
-//            RequestResources.Request req = new RequestResources.Request(self, dest,
-//            event.getNumCpus(), event.getAmountMem());
-//            trigger(req, networkPort);
+
+            // TODO: Ask for resources from neighbours by sending a ResourceRequest
+            //probe the neighbours
+            Random random = new Random();
+            Address previous = null;
+            int index = 0;
+            int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
+
+            while (index < bound) {
+                Address add = neighbours.get(random.nextInt(neighbours.size()));
+
+                if (!add.equals(previous)) {
+                    //System.out.println("PROBING PEER " + add);
+                    RequestResources.Request req = new RequestResources.Request(self, add, event.getNumCpus(), event.getMemoryInMbs());
+                    trigger(req, networkPort);
+
+                    index++;
+                    previous = add;
+                }
+            }
+            //RequestResources.Request req = new RequestResources.Request(self, dest, event.getNumCpus(), event.getAmountMem());
         }
     };
+    
     Handler<TManSample> handleTManSample = new Handler<TManSample>() {
         @Override
         public void handle(TManSample event) {
