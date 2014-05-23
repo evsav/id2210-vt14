@@ -6,12 +6,12 @@ import se.sics.kompics.timer.Timeout;
 
 public class UpdateTimeout extends Timeout {
 
-	public UpdateTimeout(SchedulePeriodicTimeout request) {
-		super(request);
-	}
+    
+    public UpdateTimeout(SchedulePeriodicTimeout request) {
+        super(request);
+    }
 
-
-	public UpdateTimeout(ScheduleTimeout request) {
-		super(request);
-	}
+    public UpdateTimeout(ScheduleTimeout request) {
+        super(request);
+    }
 }
