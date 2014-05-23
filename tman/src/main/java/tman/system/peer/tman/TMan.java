@@ -68,11 +68,12 @@ public final class TMan extends ComponentDefinition {
             tmanConfiguration = init.getConfiguration();
             period = tmanConfiguration.getPeriod();
             r = new Random(tmanConfiguration.getSeed());
+            
             availableResources = init.getAvailableResources();
+            
             SchedulePeriodicTimeout rst = new SchedulePeriodicTimeout(period, period);
             rst.setTimeoutEvent(new TManSchedule(rst));
             trigger(rst, timerPort);
-
         }
     };
 
@@ -81,6 +82,10 @@ public final class TMan extends ComponentDefinition {
         public void handle(TManSchedule event) {
             Snapshot.updateTManPartners(self, tmanPartners);
 
+            //logger.info("SENDING TMAN SAMPLE TO RM");
+            
+            //Address a = getSoftMaxAddress(tmanPartners);
+            
             // Publish sample to connected components
             trigger(new TManSample(tmanPartners), tmanPort);
         }
@@ -90,8 +95,11 @@ public final class TMan extends ComponentDefinition {
         @Override
         public void handle(CyclonSample event) {
             List<Address> cyclonPartners = event.getSample();
-
+            
+            //logger.info("RECEIVED CYCLON SAMPLE");
+            
             // merge cyclonPartners into TManPartners
+            tmanPartners.addAll(cyclonPartners);
         }
     };
 
