@@ -49,8 +49,11 @@ public final class ResourceManager extends ComponentDefinition {
     Negative<Web> webPort = negative(Web.class);
     Positive<CyclonSamplePort> cyclonSamplePort = positive(CyclonSamplePort.class);
     Positive<TManSamplePort> tmanPort = positive(TManSamplePort.class);
-    ArrayList<Address> neighbours = new ArrayList<Address>();
+    //ArrayList<Address> neighbours = new ArrayList<Address>();
 
+    //--to work with Tman
+    ArrayList<PeerDescriptor> neighbours = new ArrayList<PeerDescriptor>();
+    
     private Address self;
     private RmConfiguration configuration;
     Random random;
@@ -120,7 +123,8 @@ public final class ResourceManager extends ComponentDefinition {
             if (neighbours.isEmpty()) {
                 return;
             }
-            Address dest = neighbours.get(random.nextInt(neighbours.size()));
+            //Address dest = neighbours.get(random.nextInt(neighbours.size()));
+            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
         }
     };
 
@@ -249,29 +253,30 @@ public final class ResourceManager extends ComponentDefinition {
             int index = 0;
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
 
-            List<Address> copy = new LinkedList<Address>(neighbours);
+//            List<Address> copy = new LinkedList<Address>(neighbours);
+            List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
 
-            for (Entry<Long, RequestResource> entry : set) {
-                RequestResource job = entry.getValue();
-
-                //System.out.println("\n JOB " + job.getId() + " SCHEDULED "+ job.isScheduled());
-                if (!schedulingInProgress(job)) {
+//            for (Entry<Long, RequestResource> entry : set) {
+//                RequestResource job = entry.getValue();
+//
+//                //System.out.println("\n JOB " + job.getId() + " SCHEDULED "+ job.isScheduled());
+//                if (!schedulingInProgress(job)) {
                     
-                    inProgress.put(job.getId(), job);
-                    Snapshot.record(job.getId());
+//                    inProgress.put(job.getId(), job);
+                    Snapshot.record(event.getId());
                     
                     //System.out.println("GOING TO SCHEDULE JOB " + job.getId() + "\n");
                     //probe bound neighbours
                     while (index++ < bound) {
 
-                        Address peer = copy.get(random.nextInt(copy.size()));
+                        Address peer = copy.get(random.nextInt(copy.size())).getAddress();
                         //System.out.println(self + " PROBING " + current + " NEIGHBOURS " + neighbours.size());
-                        RequestResources.Request req = new RequestResources.Request(self, peer, job.getNumCpus(), job.getMemoryInMbs(), job.getId());
+                        RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
                         trigger(req, networkPort);
                         copy.remove(peer);
                     }
-                }
-            }
+//                }
+//            }
         }
     };
 

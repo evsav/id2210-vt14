@@ -16,7 +16,7 @@ public class Snapshot {
             = new ConcurrentHashMap<Long, List<Long>>();
 
     private static int counter = 0;
-    private static String FILENAME = "search.out";
+    private static String FILENAME = "resManager.out";
 
     public static void init(int numOfStripes) {
         FileIO.write("", FILENAME);
