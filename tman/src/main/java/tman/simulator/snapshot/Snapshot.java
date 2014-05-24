@@ -1,5 +1,6 @@
 package tman.simulator.snapshot;
 
+import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import se.sics.kompics.address.Address;
@@ -22,7 +23,7 @@ public class Snapshot {
         peers.remove(address);
     }
 
-    public static void updateTManPartners(Address address, ArrayList<Address> partners) {
+    public static void updateTManPartners(Address address, ArrayList<PeerDescriptor> partners) {
         PeerInfo peerInfo = peers.get(address);
 
         if (peerInfo == null) {

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
+import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -35,7 +36,7 @@ public final class TMan extends ComponentDefinition {
     Positive<Timer> timerPort = positive(Timer.class);
     private long period;
     private Address self;
-    private ArrayList<Address> tmanPartners;
+    private ArrayList<PeerDescriptor> tmanPartners;
     private TManConfiguration tmanConfiguration;
     private Random r;
     private AvailableResources availableResources;
@@ -52,7 +53,7 @@ public final class TMan extends ComponentDefinition {
     }
 
     public TMan() {
-        tmanPartners = new ArrayList<Address>();
+        tmanPartners = new ArrayList<PeerDescriptor>();
 
         subscribe(handleInit, control);
         subscribe(handleRound, timerPort);
@@ -84,7 +85,10 @@ public final class TMan extends ComponentDefinition {
 
             //logger.info("SENDING TMAN SAMPLE TO RM");
             
-            //Address a = getSoftMaxAddress(tmanPartners);
+            //System.out.println("TMANPARTNERS " + tmanPartners);
+//            PeerDescriptor a = getSoftMaxAddress(tmanPartners);
+            
+//            logger.info("TMAN SAMPLE " + a.getMemInMB() + " CPU " + a.getCpus());
             
             // Publish sample to connected components
             trigger(new TManSample(tmanPartners), tmanPort);
@@ -94,9 +98,14 @@ public final class TMan extends ComponentDefinition {
     Handler<CyclonSample> handleCyclonSample = new Handler<CyclonSample>() {
         @Override
         public void handle(CyclonSample event) {
-            List<Address> cyclonPartners = event.getSample();
+            List<PeerDescriptor> cyclonPartners = event.getSample();
             
             //logger.info("RECEIVED CYCLON SAMPLE");
+            
+            logger.info("CYCLON SAMPLE " + cyclonPartners);
+            for(PeerDescriptor d : cyclonPartners){
+                System.out.println("DESCRIPTOR " + d.getAddress().getId() + " CPU " + d.getCpus() + " MEM " + d.getMemInMB());
+            }
             
             // merge cyclonPartners into TManPartners
             tmanPartners.addAll(cyclonPartners);
@@ -125,9 +134,11 @@ public final class TMan extends ComponentDefinition {
     // A temperature of '0.0' will throw a divide by zero exception :)
     // Reference:
     // http://webdocs.cs.ualberta.ca/~sutton/book/2/node4.html
-    public Address getSoftMaxAddress(List<Address> entries) {
-        Collections.sort(entries, new ComparatorById(self));
+    public PeerDescriptor getSoftMaxAddress(List<PeerDescriptor> entries) {
+        //Collections.sort(entries, new ComparatorById(self));
 
+        Collections.sort(entries, new ComparatorByResources(self, availableResources));
+        
         double rnd = r.nextDouble();
         double total = 0.0d;
         double[] values = new double[entries.size()];
