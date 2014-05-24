@@ -29,6 +29,7 @@ import se.sics.kompics.timer.SchedulePeriodicTimeout;
 import se.sics.kompics.timer.ScheduleTimeout;
 import se.sics.kompics.timer.Timer;
 import se.sics.kompics.web.Web;
+import simulator.snapshot.Snapshot;
 import system.peer.RmPort;
 import tman.system.peer.tman.TManSample;
 import tman.system.peer.tman.TManSamplePort;
@@ -154,9 +155,7 @@ public final class ResourceManager extends ComponentDefinition {
 
             if (p.size() == bound) {
 
-                int success = findAvailability(p);
-
-                if (success > 0) {
+                if (findAvailability(p) > 0) {
                     //find the least loaded peer to assign the job
                     Address peer = findLeastLoaded(p);
                     System.out.println("TWO PROBES ");
@@ -209,7 +208,8 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-
+            Snapshot.record(job.getJobId());
+            
             trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
         }
     };
@@ -219,7 +219,7 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(JobComplete event) {
 
-            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");
+            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");            
             probes.remove(event.getJobId());
             jobQueue.remove(event.getJobId());
             inProgress.remove(event.getJobId());
@@ -258,6 +258,7 @@ public final class ResourceManager extends ComponentDefinition {
                 if (!schedulingInProgress(job)) {
                     
                     inProgress.put(job.getId(), job);
+                    Snapshot.record(job.getId());
                     
                     //System.out.println("GOING TO SCHEDULE JOB " + job.getId() + "\n");
                     //probe bound neighbours
@@ -271,19 +272,6 @@ public final class ResourceManager extends ComponentDefinition {
                     }
                 }
             }
-
-//            while (index < bound) {
-//
-//                Address current = neighbours.get(random.nextInt(neighbours.size()));
-//
-//                if (!current.equals(previous)) {
-//                    RequestResources.Request req = new RequestResources.Request(self, current, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
-//                    trigger(req, networkPort);
-//
-//                    index++;
-//                    previous = current;
-//                }
-//            }
         }
     };
 
@@ -335,5 +323,4 @@ public final class ResourceManager extends ComponentDefinition {
         
         return inProgress.containsKey(job.getId());
     }
-
 }

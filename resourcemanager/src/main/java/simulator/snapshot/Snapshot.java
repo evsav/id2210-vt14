@@ -2,32 +2,33 @@ package simulator.snapshot;
 
 import common.peer.AvailableResources;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import se.sics.kompics.address.Address;
 
 public class Snapshot {
 
-    private static ConcurrentHashMap<Address, PeerInfo> peers = 
-            new ConcurrentHashMap<Address, PeerInfo>();
+    private static ConcurrentHashMap<Address, PeerInfo> peers
+            = new ConcurrentHashMap<Address, PeerInfo>();
+
+    private static ConcurrentHashMap<Long, List<Long>> performance
+            = new ConcurrentHashMap<Long, List<Long>>();
+
     private static int counter = 0;
     private static String FILENAME = "search.out";
-
 
     public static void init(int numOfStripes) {
         FileIO.write("", FILENAME);
     }
 
-
     public static void addPeer(Address address, AvailableResources availableResources) {
         peers.put(address, new PeerInfo(availableResources));
     }
 
-
     public static void removePeer(Address address) {
         peers.remove(address);
     }
-
-
 
     public static void updateNeighbours(Address address, ArrayList<Address> partners) {
         PeerInfo peerInfo = peers.get(address);
@@ -38,7 +39,6 @@ public class Snapshot {
 
         peerInfo.setNeighbours(partners);
     }
-
 
     public static void report() {
         String str = new String();
@@ -51,6 +51,32 @@ public class Snapshot {
         FileIO.append(str, FILENAME);
     }
 
+    public static void flush(Long jobid, List<Long> measure) {
+
+        LinkedList<Long> l = (LinkedList<Long>) measure;
+
+        long start = l.poll();
+        long end = l.poll();
+
+        String line = "JOB " + jobid + " start: " + start + " end: " + end
+                + " duration: " + (end - start) + "ms" + "\n";
+        System.out.print(line);
+        FileIO.append(line, FILENAME);
+    }
+
+    public static void record(Long jobid) {
+
+        List<Long> test = null;
+        List<Long> t = ((test = performance.get(jobid)) == null) ? new LinkedList<Long>() : test;
+
+        t.add(System.currentTimeMillis());
+        performance.put(jobid, t);
+        
+        if(t.size() == 2){
+            flush(jobid, t);
+            performance.remove(jobid);
+        }
+    }
 
     private static String reportNetworkState() {
         String str = "---\n";
@@ -59,7 +85,6 @@ public class Snapshot {
 
         return str;
     }
-
 
     private static String reportDetails() {
         String str = "---\n";
