@@ -48,7 +48,7 @@ public class Snapshot {
         str += "###\n";
 
         System.out.println(str);
-        FileIO.append(str, FILENAME);
+        //FileIO.append(str, FILENAME);
     }
 
     public static void flush(Long jobid, List<Long> measure) {

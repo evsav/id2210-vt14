@@ -69,6 +69,7 @@ public final class DataCenterSimulationMain extends ComponentDefinition {
             super(Message.class, address, true);
         }
 
+        @Override
         public Address getValue(Message event) {
             return event.getDestination();
         }

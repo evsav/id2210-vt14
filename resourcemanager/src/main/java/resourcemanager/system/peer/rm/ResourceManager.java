@@ -2,6 +2,7 @@ package resourcemanager.system.peer.rm;
 
 import common.configuration.RmConfiguration;
 import common.peer.AvailableResources;
+import common.simulation.BatchRequestResource;
 import common.simulation.RequestResource;
 import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
@@ -49,10 +50,7 @@ public final class ResourceManager extends ComponentDefinition {
     Negative<Web> webPort = negative(Web.class);
     Positive<CyclonSamplePort> cyclonSamplePort = positive(CyclonSamplePort.class);
     Positive<TManSamplePort> tmanPort = positive(TManSamplePort.class);
-    //ArrayList<Address> neighbours = new ArrayList<Address>();
-
-    //--to work with Tman
-    ArrayList<PeerDescriptor> neighbours = new ArrayList<PeerDescriptor>();
+    ArrayList<Address> neighbours = new ArrayList<Address>();
     
     private Address self;
     private RmConfiguration configuration;
@@ -82,6 +80,7 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleInit, control);
         subscribe(handleCyclonSample, cyclonSamplePort);
         subscribe(handleRequestResource, indexPort);
+        subscribe(handleBatchRequest, indexPort);
         subscribe(handleUpdateTimeout, timerPort);
         subscribe(releaseResources, timerPort);
         subscribe(handleResourceAllocationRequest, networkPort);
@@ -124,7 +123,7 @@ public final class ResourceManager extends ComponentDefinition {
                 return;
             }
             //Address dest = neighbours.get(random.nextInt(neighbours.size()));
-            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
+            Address dest = neighbours.get(random.nextInt(neighbours.size()));
         }
     };
 
@@ -185,9 +184,9 @@ public final class ResourceManager extends ComponentDefinition {
             //put the job in the job queue
             pendingJobs.add(event);
 
-            Job job = null;
+            Job job = event;
 
-            while ((job = pendingJobs.poll()) != null) {
+            while (pendingJobs.size() > 0 && ((job = pendingJobs.remove()) != null)) {
 
                 //reserve the resources
                 availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
@@ -253,8 +252,7 @@ public final class ResourceManager extends ComponentDefinition {
             int index = 0;
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
 
-//            List<Address> copy = new LinkedList<Address>(neighbours);
-            List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
+            List<Address> copy = new LinkedList<Address>(neighbours);
 
 //            for (Entry<Long, RequestResource> entry : set) {
 //                RequestResource job = entry.getValue();
@@ -269,14 +267,23 @@ public final class ResourceManager extends ComponentDefinition {
                     //probe bound neighbours
                     while (index++ < bound) {
 
-                        Address peer = copy.get(random.nextInt(copy.size())).getAddress();
-                        //System.out.println(self + " PROBING " + current + " NEIGHBOURS " + neighbours.size());
+                        Address peer = copy.get(random.nextInt(copy.size()));
+                        copy.remove(peer);
+                        System.out.println(self + " REQUESTING RESOURCES for job " + event.getId() + " FROM NEIGHBR " + peer.getId());
                         RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
                         trigger(req, networkPort);
-                        copy.remove(peer);
                     }
 //                }
 //            }
+        }
+    };
+    
+    Handler<BatchRequestResource> handleBatchRequest = new Handler<BatchRequestResource>(){
+        
+        @Override
+        public void handle(BatchRequestResource event){
+            
+            System.out.println("BATCH REQUEST BATCH REQUEST");
         }
     };
 
@@ -284,7 +291,7 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(TManSample event) {
 
-            System.out.print("[RMMANAGER]: TMAN SAMPLE RECEIVED     ");
+            //TMAN NOT USED IN BASIC SPARROW IMPLEMENTATION
         }
     };
 
