@@ -3,19 +3,20 @@ package cyclon.system.peer.cyclon;
 import java.util.ArrayList;
 
 import se.sics.kompics.Event;
+import se.sics.kompics.address.Address;
 
 public class CyclonPartnersResponse extends Event {
 
-    ArrayList<PeerDescriptor> partners = new ArrayList<PeerDescriptor>();
+    ArrayList<Address> partners = new ArrayList<Address>();
 
-    public CyclonPartnersResponse(ArrayList<PeerDescriptor> partners) {
+    public CyclonPartnersResponse(ArrayList<Address> partners) {
         this.partners = partners;
     }
 
     public CyclonPartnersResponse() {
     }
 
-    public ArrayList<PeerDescriptor> getPartners() {
+    public ArrayList<Address> getPartners() {
         return this.partners;
     }
 }

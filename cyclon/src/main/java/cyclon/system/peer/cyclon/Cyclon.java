@@ -191,16 +191,15 @@ public final class Cyclon extends ComponentDefinition {
         }
     };
 
-    private ArrayList<PeerDescriptor> getPartners() {
+    private ArrayList<Address> getPartners() {
         
         ArrayList<PeerDescriptor> partnersDescriptors = cache.getAll();
-//        ArrayList<Address> partners = new ArrayList<Address>();
-//        
-//        for (PeerDescriptor desc : partnersDescriptors) {
-//            partners.add(desc.getAddress());
-//        }
+        ArrayList<Address> partners = new ArrayList<Address>();
+        
+        for (PeerDescriptor desc : partnersDescriptors) {
+            partners.add(desc.getAddress());
+        }
 
-//        return partners;
-        return partnersDescriptors;
+        return partners;
     }
 }
