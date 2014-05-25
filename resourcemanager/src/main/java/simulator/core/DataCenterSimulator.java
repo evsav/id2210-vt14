@@ -103,7 +103,6 @@ public final class DataCenterSimulator extends ComponentDefinition {
         
         @Override
         public void handle(BatchRequestResource event) {
-            System.out.println("HDSFLHSDJKFH KJSDGKJF HSDJKH FJKSDH JKHFSDKJ ");
             Long successor = ringNodes.getNode(event.getId());
             Component peer = peers.get(successor);
             trigger(event, peer.getNegative(RmPort.class));

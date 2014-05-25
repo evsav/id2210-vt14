@@ -64,15 +64,25 @@ public class Snapshot {
         FileIO.append(line, FILENAME);
     }
 
-    public static void record(Long jobid) {
+    public static void record(Long jobid, int jobNo) {
 
         List<Long> test = null;
         List<Long> t = ((test = performance.get(jobid)) == null) ? new LinkedList<Long>() : test;
 
-        t.add(System.currentTimeMillis());
+        if(t.size() <= 1){
+            t.add(System.currentTimeMillis());
+        }
+        else {
+            t.add(1, System.currentTimeMillis());
+        }
+        
         performance.put(jobid, t);
         
-        if(t.size() == 2){
+        System.out.println("\n PERFORMANCE TABLE " + performance + "\n");
+        
+        //the batch is finished
+        if(jobNo == 1){
+            System.out.println("\nBENCHMARKING\n");
             flush(jobid, t);
             performance.remove(jobid);
         }

@@ -19,10 +19,11 @@ public class Job extends Message {
     private final int numCpus;
     private final int amountMemInMb;
     private final long jobId;
+    private final int jobNo;
     private final int timeToHoldResource;
     
     public Job(Address source, Address destination, int numCpus, 
-            int amountMemInMb, long jobId, int timeToHoldResource){
+            int amountMemInMb, long jobId, int jobNo, int timeToHoldResource){
         
         super(source, destination);
         
@@ -30,6 +31,7 @@ public class Job extends Message {
         this.amountMemInMb = amountMemInMb;
         this.jobId = jobId;
         this.timeToHoldResource = timeToHoldResource;
+        this.jobNo = jobNo;
     }
     
     public int getNumCpus(){
@@ -42,6 +44,10 @@ public class Job extends Message {
     
     public long getJobId(){
         return this.jobId;
+    }
+    
+    public int getJobNo(){
+        return this.jobNo;
     }
     
     public int getJobDuration(){
