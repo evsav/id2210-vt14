@@ -17,13 +17,13 @@ public class BatchRequestResource extends Event {
     private final int numCpus;
     private final int memoryInMbs;
     private final int timeToHoldResource;
-    private final int machines;
+    private final int noofJobs;
 
-    public BatchRequestResource(long id, int numCpus, int memoryInMbs, int machines, int timeToHoldResource) {
+    public BatchRequestResource(long id, int numCpus, int memoryInMbs, int noofJobs, int timeToHoldResource) {
         this.id = id;
         this.numCpus = numCpus;
         this.memoryInMbs = memoryInMbs;
-        this.machines = machines;
+        this.noofJobs = noofJobs;
         this.timeToHoldResource = timeToHoldResource;
     }
 
@@ -43,7 +43,7 @@ public class BatchRequestResource extends Event {
         return this.timeToHoldResource;
     }
 
-    public int getMachines() {
-        return this.machines;
+    public int getNoofJobs() {
+        return this.noofJobs;
     }   
 }
