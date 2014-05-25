@@ -78,7 +78,7 @@ public class Snapshot {
         
         performance.put(jobid, t);
         
-        System.out.println("\n PERFORMANCE TABLE " + performance + "\n");
+        //System.out.println("\n PERFORMANCE TABLE " + performance + "\n");
         
         //the batch is finished
         if(jobNo == 1){

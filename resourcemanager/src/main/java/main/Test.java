@@ -28,6 +28,10 @@ public class Test {
         System.out.println("REMOVED ELEMENT " + a);
         //list.remove();
         
+        int aa = 2;
+        aa *= 2;
+        System.out.println("A is " + aa);
+        System.out.println("first element of the list " + list.get(0));
         System.out.println("List size is " + list.size() + " the elements are " + list);
     }
 }

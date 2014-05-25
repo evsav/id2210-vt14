@@ -17,14 +17,14 @@ public class RequestResources {
         private final int numCpus;
         private final int amountMemInMb;
         private final long jobId;
-        private final int jobNo;
+        private final int noofjobs;
 
-        public Request(Address source, Address destination, int numCpus, int amountMemInMb, long jobId, int jobNo) {
+        public Request(Address source, Address destination, int numCpus, int amountMemInMb, long jobId, int noofjobs) {
             super(source, destination);
             this.numCpus = numCpus;
             this.amountMemInMb = amountMemInMb;
             this.jobId = jobId;
-            this.jobNo = jobNo;
+            this.noofjobs = noofjobs;
         }
 
         public int getAmountMemInMb() {
@@ -39,8 +39,8 @@ public class RequestResources {
             return this.jobId;
         }
         
-        public int getJobNo(){
-            return this.jobNo;
+        public int getNoofJobs(){
+            return this.noofjobs;
         }
     }
 
@@ -52,17 +52,17 @@ public class RequestResources {
         private final int numCpus;
         private final int amountMemInMb;
         private final long jobId;
-        private final int jobNo;
+        private final int noofjobs;
 
         public Response(Address source, Address destination, int numCpus, int amountMemInMb, 
-                long jobId, int jobNo, boolean success) {
+                long jobId, int noofjobs, boolean success) {
             super(source, destination);
             
             this.numCpus = numCpus;
             this.amountMemInMb = amountMemInMb;
             this.jobId = jobId;
             this.success = success;
-            this.jobNo = jobNo;
+            this.noofjobs = noofjobs;
         }
 
         public int getNumCpus(){
@@ -81,8 +81,8 @@ public class RequestResources {
             return this.success;
         }
         
-        public int getJobNo(){
-            return this.jobNo;
+        public int getNoofJobs(){
+            return this.noofjobs;
         }
     }
 
