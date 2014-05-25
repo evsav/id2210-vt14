@@ -55,14 +55,14 @@ public final class Peer extends ComponentDefinition {
         connect(network, rm.getNegative(Network.class));
         connect(network, cyclon.getNegative(Network.class));
         connect(network, bootstrap.getNegative(Network.class));
-        connect(network, tman.getNegative(Network.class));
+        //connect(network, tman.getNegative(Network.class));
         connect(timer, rm.getNegative(Timer.class));
         connect(timer, cyclon.getNegative(Timer.class));
         connect(timer, bootstrap.getNegative(Timer.class));
-        connect(timer, tman.getNegative(Timer.class));
+        //connect(timer, tman.getNegative(Timer.class));
         connect(cyclon.getPositive(CyclonSamplePort.class), rm.getNegative(CyclonSamplePort.class));
-        connect(cyclon.getPositive(CyclonSamplePort.class), tman.getNegative(CyclonSamplePort.class));
-        connect(tman.getPositive(TManSamplePort.class), rm.getNegative(TManSamplePort.class));
+        //connect(cyclon.getPositive(CyclonSamplePort.class), tman.getNegative(CyclonSamplePort.class));
+        //connect(tman.getPositive(TManSamplePort.class), rm.getNegative(TManSamplePort.class));
 
         connect(rmPort, rm.getNegative(RmPort.class));
 
@@ -77,7 +77,7 @@ public final class Peer extends ComponentDefinition {
             self = init.getPeerSelf();
             CyclonConfiguration cyclonConfiguration = init.getCyclonConfiguration();
             rmConfiguration = init.getApplicationConfiguration();
-            tmanConfiguration = init.getTManConfiguration();
+            //tmanConfiguration = init.getTManConfiguration();
             bootstrapRequestPeerCount = cyclonConfiguration.getBootstrapRequestPeerCount();
 
             availableResources = init.getAvailableResources();
@@ -117,7 +117,7 @@ public final class Peer extends ComponentDefinition {
             
             trigger(new RmInit(self, rmConfiguration, availableResources), rm.getControl());
             
-            trigger(new TManInit(self, tmanConfiguration, availableResources), tman.getControl());
+            //trigger(new TManInit(self, tmanConfiguration, availableResources), tman.getControl());
         }
     };
 

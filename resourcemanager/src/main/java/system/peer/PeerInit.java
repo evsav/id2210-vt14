@@ -20,6 +20,7 @@ public final class PeerInit extends Init {
     public PeerInit(Address peerSelf, BootstrapConfiguration bootstrapConfiguration,
             CyclonConfiguration cyclonConfiguration, RmConfiguration applicationConfiguration, 
             TManConfiguration tmanConfiguration, AvailableResources availableResources) {
+        
         super();
         this.peerSelf = peerSelf;
         this.bootstrapConfiguration = bootstrapConfiguration;

@@ -283,16 +283,8 @@ public final class ResourceManager extends ComponentDefinition {
     Handler<TManSample> handleTManSample = new Handler<TManSample>() {
         @Override
         public void handle(TManSample event) {
-            //event.get
-//            System.out.print("[RMMANAGER]: TMAN SAMPLE RECEIVED     ");
-//
-//            ArrayList<Address> list = event.getSample();
-//            for (int i = 0; i < list.size(); i++) {
-//                Address a = list.get(i);
-//                System.out.print("" + a.getId() + ", ");
-//            }
-//            System.out.println();
-            //System.exit(0);
+
+            System.out.print("[RMMANAGER]: TMAN SAMPLE RECEIVED     ");
         }
     };
 

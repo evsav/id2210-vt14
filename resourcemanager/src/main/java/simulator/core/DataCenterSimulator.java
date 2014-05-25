@@ -75,7 +75,7 @@ public final class DataCenterSimulator extends ComponentDefinition {
             bootstrapConfiguration = init.getBootstrapConfiguration();
             cyclonConfiguration = init.getCyclonConfiguration();
             rmConfiguration = init.getAggregationConfiguration();
-            tmanConfiguration = init.getTmanConfiguration();
+            //tmanConfiguration = init.getTmanConfiguration();
             
             identifierSpaceSize = cyclonConfiguration.getIdentifierSpaceSize();
 
