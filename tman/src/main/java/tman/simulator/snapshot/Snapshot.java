@@ -2,6 +2,7 @@ package tman.simulator.snapshot;
 
 import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 import se.sics.kompics.address.Address;
 
@@ -23,7 +24,7 @@ public class Snapshot {
         peers.remove(address);
     }
 
-    public static void updateTManPartners(Address address, ArrayList<PeerDescriptor> partners) {
+    public static void updateTManPartners(Address address, List<PeerDescriptor> partners) {
         PeerInfo peerInfo = peers.get(address);
 
         if (peerInfo == null) {
@@ -33,7 +34,7 @@ public class Snapshot {
         peerInfo.updateTManPartners(partners);
     }
 
-    public static void updateCyclonPartners(Address address, ArrayList<Address> partners) {
+    public static void updateCyclonPartners(Address address, List<Address> partners) {
         PeerInfo peerInfo = peers.get(address);
 
         if (peerInfo == null) {

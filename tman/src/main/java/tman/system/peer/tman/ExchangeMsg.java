@@ -16,24 +16,20 @@ public class ExchangeMsg {
         private final UUID requestId;
         private final DescriptorBuffer randomBuffer;
 
-
-        public Request(UUID requestId, DescriptorBuffer randomBuffer, Address source, 
+        public Request(UUID requestId, DescriptorBuffer randomBuffer, Address source,
                 Address destination) {
             super(source, destination);
             this.requestId = requestId;
             this.randomBuffer = randomBuffer;
         }
 
-
         public UUID getRequestId() {
             return requestId;
         }
 
-        
         public DescriptorBuffer getRandomBuffer() {
             return randomBuffer;
         }
-
 
         public int getSize() {
             return 0;
@@ -46,23 +42,19 @@ public class ExchangeMsg {
         private final UUID requestId;
         private final DescriptorBuffer selectedBuffer;
 
-
         public Response(UUID requestId, DescriptorBuffer selectedBuffer, Address source, Address destination) {
             super(source, destination);
             this.requestId = requestId;
             this.selectedBuffer = selectedBuffer;
         }
 
-
         public UUID getRequestId() {
             return requestId;
         }
 
-
         public DescriptorBuffer getSelectedBuffer() {
             return selectedBuffer;
         }
-
 
         public int getSize() {
             return 0;
@@ -73,12 +65,10 @@ public class ExchangeMsg {
 
         private final Address peer;
 
-
         public RequestTimeout(ScheduleTimeout request, Address peer) {
             super(request);
             this.peer = peer;
         }
-
 
         public Address getPeer() {
             return peer;

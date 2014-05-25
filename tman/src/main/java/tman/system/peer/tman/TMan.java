@@ -6,10 +6,14 @@ import java.util.ArrayList;
 
 import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
+import cyclon.system.peer.cyclon.DescriptorBuffer;
 import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +40,8 @@ public final class TMan extends ComponentDefinition {
     Positive<Timer> timerPort = positive(Timer.class);
     private long period;
     private Address self;
-    private ArrayList<PeerDescriptor> tmanPartners;
+    private List<PeerDescriptor> tmanPartners;
+    private List<PeerDescriptor> cyclonPartners;
     private TManConfiguration tmanConfiguration;
     private Random r;
     private AvailableResources availableResources;
@@ -54,6 +59,7 @@ public final class TMan extends ComponentDefinition {
 
     public TMan() {
         tmanPartners = new ArrayList<PeerDescriptor>();
+        cyclonPartners = new ArrayList<PeerDescriptor>();
 
         subscribe(handleInit, control);
         subscribe(handleRound, timerPort);
@@ -69,9 +75,9 @@ public final class TMan extends ComponentDefinition {
             tmanConfiguration = init.getConfiguration();
             period = tmanConfiguration.getPeriod();
             r = new Random(tmanConfiguration.getSeed());
-            
+
             availableResources = init.getAvailableResources();
-            
+
             SchedulePeriodicTimeout rst = new SchedulePeriodicTimeout(period, period);
             rst.setTimeoutEvent(new TManSchedule(rst));
             trigger(rst, timerPort);
@@ -83,46 +89,77 @@ public final class TMan extends ComponentDefinition {
         public void handle(TManSchedule event) {
             Snapshot.updateTManPartners(self, tmanPartners);
 
-            //logger.info("SENDING TMAN SAMPLE TO RM");
-            
             //System.out.println("TMANPARTNERS " + tmanPartners);
-//            PeerDescriptor a = getSoftMaxAddress(tmanPartners);
-            
-//            logger.info("TMAN SAMPLE " + a.getMemInMB() + " CPU " + a.getCpus());
-            
-            // Publish sample to connected components
-            trigger(new TManSample(tmanPartners), tmanPort);
+//            PeerDescriptor peer = getSoftMaxAddress(tmanPartners);
+//            if(peer == null){
+//                return;
+//            }
+            //select a random peer from the first half
+            if (!tmanPartners.isEmpty()) {
+                int randomIndex = tmanPartners.size() > 1 ? new Random().nextInt(tmanPartners.size() / 2) : 0;
+                PeerDescriptor peer = tmanPartners.get(randomIndex);
+
+                PeerDescriptor mydescriptor = new PeerDescriptor(self, availableResources);
+                List<PeerDescriptor> md = new ArrayList<PeerDescriptor>();
+                md.add(mydescriptor);
+
+                DescriptorBuffer buffer = new DescriptorBuffer(self, tmanPartners);
+
+                tmanPartners = merge(tmanPartners, md);
+                tmanPartners = merge(tmanPartners, buffer.getDescriptors());
+                Collections.sort(tmanPartners, new ComparatorByResources(self, availableResources));
+
+                trigger(new ExchangeMsg.Request(event.getTimeoutId(), buffer, self, peer.getAddress()), networkPort);
+
+                // Publish the sample to connected components
+                trigger(new TManSample(tmanPartners), tmanPort);
+            }
         }
     };
 
     Handler<CyclonSample> handleCyclonSample = new Handler<CyclonSample>() {
         @Override
         public void handle(CyclonSample event) {
-            List<PeerDescriptor> cyclonPartners = event.getSample();
-            
-            //logger.info("RECEIVED CYCLON SAMPLE");
-            
-            logger.info("CYCLON SAMPLE " + cyclonPartners);
-            for(PeerDescriptor d : cyclonPartners){
-                System.out.println("DESCRIPTOR " + d.getAddress().getId() + " CPU " + d.getCpus() + " MEM " + d.getMemInMB());
-            }
-            
+            //List<PeerDescriptor> cyclonPartners = event.getSample();
+            cyclonPartners = event.getSample();
+
+//            logger.info("CYCLON SAMPLE " + cyclonPartners);
+//            for(PeerDescriptor d : cyclonPartners){
+//                System.out.println("DESCRIPTOR " + d.getAddress().getId() + " CPU " + d.getCpus() + " MEM " + d.getMemInMB());
+//            }
             // merge cyclonPartners into TManPartners
-            tmanPartners.addAll(cyclonPartners);
+            tmanPartners = merge(tmanPartners, cyclonPartners);
+            Collections.sort(tmanPartners, new ComparatorByResources(self, availableResources));
         }
     };
 
     Handler<ExchangeMsg.Request> handleTManPartnersRequest = new Handler<ExchangeMsg.Request>() {
         @Override
         public void handle(ExchangeMsg.Request event) {
+            //System.out.println("REQUEST TMAN PARTNERS REQUEST TMAN PARTNERS REQUEST");
+            List<PeerDescriptor> rndView = event.getRandomBuffer().getDescriptors();
 
+            PeerDescriptor mydescriptor = new PeerDescriptor(self, availableResources);
+            List<PeerDescriptor> md = new ArrayList<PeerDescriptor>();
+            md.add(mydescriptor);
+            tmanPartners = merge(tmanPartners, md);
+
+            DescriptorBuffer buffer = new DescriptorBuffer(self, tmanPartners);
+            trigger(new ExchangeMsg.Response(event.getRequestId(), buffer, self, event.getSource()), networkPort);
+
+            tmanPartners = merge(tmanPartners, rndView);
+            Collections.sort(tmanPartners, new ComparatorByResources(self, availableResources));
         }
     };
 
     Handler<ExchangeMsg.Response> handleTManPartnersResponse = new Handler<ExchangeMsg.Response>() {
         @Override
         public void handle(ExchangeMsg.Response event) {
+            //System.out.println("TMAN PARTNERS RESPONSE TMAN PARTNERS RESPONSE");
+            List<PeerDescriptor> rndView = event.getSelectedBuffer().getDescriptors();
 
+            tmanPartners = merge(tmanPartners, rndView);
+            Collections.sort(tmanPartners, new ComparatorByResources(self, availableResources));
         }
     };
 
@@ -137,12 +174,17 @@ public final class TMan extends ComponentDefinition {
     public PeerDescriptor getSoftMaxAddress(List<PeerDescriptor> entries) {
         //Collections.sort(entries, new ComparatorById(self));
 
+        if (entries.isEmpty()) {
+            return null;
+        }
+
         Collections.sort(entries, new ComparatorByResources(self, availableResources));
-        
+
         double rnd = r.nextDouble();
         double total = 0.0d;
         double[] values = new double[entries.size()];
         int j = entries.size() + 1;
+
         for (int i = 0; i < entries.size(); i++) {
             // get inverse of values - lowest have highest value.
             double val = j;
@@ -164,4 +206,16 @@ public final class TMan extends ComponentDefinition {
         return entries.get(entries.size() - 1);
     }
 
+    /**
+     * merges two lists, removes duplicates
+     */
+    private List<PeerDescriptor> merge(List<PeerDescriptor> l1, List<PeerDescriptor> l2) {
+
+        l1.addAll(l2);
+
+        Set<PeerDescriptor> flatten = new HashSet<PeerDescriptor>(l1);
+        List<PeerDescriptor> finall = new ArrayList<PeerDescriptor>(flatten);
+
+        return finall;
+    }
 }
