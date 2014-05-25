@@ -1,19 +1,24 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package common.simulation.scenarios;
 
 import java.util.Random;
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 
 @SuppressWarnings("serial")
-public class Scenario1 extends Scenario {
+public class Scenario2 extends Scenario {
 
     private static SimulationScenario scenario = new SimulationScenario() {
         {
 
             final Random random = new Random();
 
-            StochasticProcess process0 = new StochasticProcess() {
+            SimulationScenario.StochasticProcess process0 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(250));
+                    eventInterArrivalTime(constant(1000));
                     raise(10, Operations.peerJoin(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(8), constant(12000)
@@ -21,19 +26,20 @@ public class Scenario1 extends Scenario {
                 }
             };
 
-            StochasticProcess process1 = new StochasticProcess() {
+            System.out.println("Batch resource request");
+            SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(250));
-                    raise(50, Operations.requestResources(),
+                    eventInterArrivalTime(constant(100));
+                    raise(10, Operations.batchRequest(),
                             uniform(0, Integer.MAX_VALUE),
-                            constant(2), constant(2000),
+                            constant(2), constant(12000), constant(2),
                             constant(1000)
                     );
                 }
             };
 
             // TODO - not used yet
-            StochasticProcess failPeersProcess = new StochasticProcess() {
+            SimulationScenario.StochasticProcess failPeersProcess = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(100));
                     raise(1, Operations.peerFail,
@@ -41,7 +47,7 @@ public class Scenario1 extends Scenario {
                 }
             };
 
-            StochasticProcess terminateProcess = new StochasticProcess() {
+            SimulationScenario.StochasticProcess terminateProcess = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(100));
                     raise(1, Operations.terminate);
@@ -54,7 +60,7 @@ public class Scenario1 extends Scenario {
     };
 
     // -------------------------------------------------------------------
-    public Scenario1() {
+    public Scenario2() {
         super(scenario);
     }
 }

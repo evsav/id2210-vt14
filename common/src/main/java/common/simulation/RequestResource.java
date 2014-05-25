@@ -15,7 +15,7 @@ public final class RequestResource extends Event {
         this.memoryInMbs = memoryInMbs;
         this.timeToHoldResource = timeToHoldResource;
     }
-
+    
     public long getId() {
         return id;
     }
@@ -31,5 +31,4 @@ public final class RequestResource extends Event {
     public int getNumCpus() {
         return numCpus;
     }
-
 }
