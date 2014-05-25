@@ -28,8 +28,6 @@ public final class PeerDescriptor extends OverlayAddress implements Comparable<P
     public int getNumFreeCpus() {
         return numFreeCpus;
     }
-    
-    
 
     @Override
     public int compareTo(PeerDescriptor that) {

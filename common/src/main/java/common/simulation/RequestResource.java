@@ -3,11 +3,12 @@ package common.simulation;
 import se.sics.kompics.Event;
 
 public final class RequestResource extends Event {
-    
+
     private final long id;
     private final int numCpus;
     private final int memoryInMbs;
     private final int timeToHoldResource;
+    private boolean scheduled;
 
     public RequestResource(long id, int numCpus, int memoryInMbs, int timeToHoldResource) {
         this.id = id;
@@ -32,4 +33,11 @@ public final class RequestResource extends Event {
         return numCpus;
     }
 
+    public void setScheduled(boolean scheduled){
+        this.scheduled = scheduled;
+    }
+    
+    public boolean isScheduled(){
+        return this.scheduled;
+    }
 }

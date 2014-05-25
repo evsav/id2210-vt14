@@ -19,32 +19,32 @@ public class AvailableResources {
         this.freeMemInMbs = freeMemInMbs;
     }
 
-    
-
     public synchronized boolean isAvailable(int numCpus, int memInMbs) {
-        if (numFreeCpus >= numCpus && freeMemInMbs >= memInMbs) {
-            return true;
-        }
-        return false;
+
+        return numFreeCpus >= numCpus && freeMemInMbs >= memInMbs;
     }
 
     public synchronized boolean allocate(int numCpus, int memInMbs) {
+
         if (numFreeCpus >= numCpus && freeMemInMbs >= memInMbs) {
             numFreeCpus -= numCpus;
             freeMemInMbs -= memInMbs;
             return true;
         }
+
         return false;
     }
 
     public synchronized void release(int numCpus, int memInMbs) {
+        
         if (numCpus <= 0 || memInMbs <= 0) {
             throw new IllegalArgumentException("Invalid numbCpus or mem");
         }
+        
         numFreeCpus += numCpus;
         freeMemInMbs += memInMbs;
     }
-    
+
     public int getNumFreeCpus() {
         return numFreeCpus;
     }
