@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +120,7 @@ public final class TMan extends ComponentDefinition {
         @Override
         public void handle(CyclonSample event) {
             //List<PeerDescriptor> cyclonPartners = event.getSample();
-            cyclonPartners = event.getSample();
+            //cyclonPartners = event.getSample();
 
 //            logger.info("CYCLON SAMPLE " + cyclonPartners);
 //            for(PeerDescriptor d : cyclonPartners){
