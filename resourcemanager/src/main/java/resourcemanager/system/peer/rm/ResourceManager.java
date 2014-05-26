@@ -82,8 +82,6 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleRequestResource, indexPort);
         subscribe(handleUpdateTimeout, timerPort);
         subscribe(releaseResources, timerPort);
-        subscribe(handleResourceAllocationRequest, networkPort);
-        //subscribe(handleResourceAllocationResponse, networkPort);
         subscribe(jobDaemon, networkPort);
         subscribe(handleJobComplete, networkPort);
         subscribe(handleTManSample, tmanPort);
@@ -126,61 +124,35 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
-    Handler<RequestResources.Request> handleResourceAllocationRequest = new Handler<RequestResources.Request>() {
-        @Override
-        public void handle(RequestResources.Request event) {
-
-            //System.out.println(self.getId() + " PROBED BY " + event.getSource().getId());
-            boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
-
-            //WORKER: ASSIGN JOB TO MYSELF
-            Job assign = new Job(self, self, event.getNumCpus(),
-                    event.getAmountMemInMb(), event.getTimetoholdResource(), event.getJobId());
-
-            trigger(assign, networkPort);
-
-//            trigger(new RequestResources.Response(self, event.getSource(),
-//                    availableResources.getNumFreeCpus(),
-//                    availableResources.getFreeMemInMbs(),
-//                    event.getJobId(), pendingJobs.size(), success), networkPort);
-        }
-    };
-
-//    Handler<RequestResources.Response> handleResourceAllocationResponse = new Handler<RequestResources.Response>() {
-//        @Override
-//        public void handle(RequestResources.Response event) {
-//
-//            System.out.println(self.getId() + " RECEIVED FROM PROBE " + event.getSource().getId());
-//
-//            //find the least loaded peer to assign the job
-//            Address peer = findLeastLoaded(p);
-//            System.out.println("TWO PROBES ");
-//            RequestResource job = jobQueue.get(event.getJobId());
-//
-//            Job assign = new Job(self, peer, job.getNumCpus(),
-//                    job.getMemoryInMbs(), job.getId(), job.getTimeToHoldResource());
-//
-//            trigger(assign, networkPort);
-//        }
-//    };
     Handler<Job> jobDaemon = new Handler<Job>() {
 
         @Override
         public void handle(Job event) {
 
-            //put the job in the job queue
-            pendingJobs.add(event);
+            boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
-            Job job = pendingJobs.remove();
+            if (!success && !pendingJobs.contains(event)) {
+                //put the job in the job queue
+                pendingJobs.add(event);
+                System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
+                return;
+            }
+
+            //Job job = pendingJobs.remove();
+            Snapshot.record(event.getJobId());
 
             //reserve the resources
-            availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
+            availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
 
-            System.out.println("\nJOB " + job.getJobId() + " ASSIGNED TO " + self + "\n");
+            if (!pendingJobs.isEmpty()) {
+                pendingJobs.remove();
+            }
+
+            System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
             //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
-            ScheduleTimeout st = new ScheduleTimeout(job.getTimetoholdResource());
-            st.setTimeoutEvent(new JobTimeout(st, job));
+            ScheduleTimeout st = new ScheduleTimeout(event.getTimetoholdResource());
+            st.setTimeoutEvent(new JobTimeout(st, event));
             trigger(st, timerPort);
         }
     };
@@ -195,13 +167,13 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-            Snapshot.record(job.getJobId());
+//            Snapshot.record(job.getJobId());
 
-            if(pendingJobs.size() > 0){
-                job = pendingJobs.remove();
+            if (pendingJobs.size() > 0) {
+                job = pendingJobs.peek();
                 trigger(job, networkPort);
             }
-            
+
             //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
         }
     };
@@ -236,20 +208,22 @@ public final class ResourceManager extends ComponentDefinition {
 
             List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
 
-            Snapshot.record(event.getId());
+            if (copy.size() == 4) {
+                Snapshot.record(event.getId());
 
-            //assign the job to a random peer
-            //for (int i = 0; i < 2; i++) {
-            PeerDescriptor peer = copy.get(random.nextInt(copy.size()));
-            copy.remove(peer);
-            System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
+                //assign the job to a random peer
+                //for (int i = 0; i < 2; i++) {
+                PeerDescriptor peer = copy.get(random.nextInt(copy.size()));
+                copy.remove(peer);
+                System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
 //            RequestResources.Request req = new RequestResources.Request(self, peer.getAddress(),
 //                    event.getNumCpus(), event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
 
-            Job assign = new Job(self, peer.getAddress(), event.getNumCpus(),
-                    event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
+                Job assign = new Job(self, peer.getAddress(), event.getNumCpus(),
+                        event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
 
-            trigger(assign, networkPort);
+                trigger(assign, networkPort);
+            }
             //}
         }
     };
