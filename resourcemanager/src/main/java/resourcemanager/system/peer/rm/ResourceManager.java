@@ -136,7 +136,7 @@ public final class ResourceManager extends ComponentDefinition {
             trigger(new RequestResources.Response(self, event.getSource(),
                     availableResources.getNumFreeCpus(),
                     availableResources.getFreeMemInMbs(),
-                    event.getJobId(), event.getNoofJobs(), success), networkPort);
+                    event.getJobId(), event.getNoofJobs(), pendingJobs.size(), success), networkPort);
         }
     };
 
@@ -158,32 +158,32 @@ public final class ResourceManager extends ComponentDefinition {
             probes.put(event.getJobId(), p);
 
             //System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
-
             if (p.size() == (2 * noofjobs)) {
 
-                if (findAvailability(p) > 0) {
+//                if (findAvailability(p) > 0) {
+                //System.out.println((p.size()) + " PROBES ");
+                BatchRequestResource job = jobQueue.get(event.getJobId());
 
-                    //System.out.println((p.size()) + " PROBES ");
-                    BatchRequestResource job = jobQueue.get(event.getJobId());
-                    
-                    //assign tasks to the least loaded workers
-                    for (int i = 0; i < noofjobs; i++) {
-                        
-                        //find the least loaded peer to assign the job
-                        RequestResources.Response peer = findLeastLoaded(p);
-                        p.remove(peer);
-                        
-                        System.out.println("ASSIGNING TASK " + i + " TO " + peer.getSource().getId());
-                        
-                        Job assign = new Job(self, peer.getSource(), job.getNumCpus() / 2,
-                                job.getMemoryInMbs() / 2, job.getId(), i, job.getTimeToHoldResource());
+                //assign tasks to the least loaded workers
+                for (int i = 0; i < noofjobs; i++) {
 
-                        trigger(assign, networkPort);
-                    }
-                } else {
-                    //this job needs rescheduling
-                    inProgress.remove(event.getJobId());
+                    //find the least loaded peer to assign the job
+                    RequestResources.Response peer = findLeastLoaded(p);
+                    p.remove(peer);
+
+                    System.out.println("ASSIGNING TASK " + i + " TO " + peer.getSource().getId());
+
+                    Job assign = new Job(self, peer.getSource(), job.getNumCpus() / 2,
+                            job.getMemoryInMbs() / 2, job.getId(), i, job.getTimeToHoldResource());
+
+                    trigger(assign, networkPort);
                 }
+//                } 
+//                else {
+//                    //RESCHEDULING REMOVED
+//                    //this job needs rescheduling
+//                    inProgress.remove(event.getJobId());
+//                }
             }
         }
     };
@@ -198,21 +198,19 @@ public final class ResourceManager extends ComponentDefinition {
 
             Job job = null;
 
-            while (pendingJobs.size() > 0 /*&& ((job = pendingJobs.remove()) != null)*/) {
+            //while (pendingJobs.size() > 0 /*&& ((job = pendingJobs.remove()) != null)*/) {
+            job = pendingJobs.remove();
 
-                job = pendingJobs.get(0);
-                pendingJobs.remove();
+            //reserve the resources
+            availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
 
-                //reserve the resources
-                availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
+            System.out.println("\nJOB " + job.getJobId() + ", TASK " + job.getJobNo() + ", ASSIGNED TO " + self + "\n");
 
-                System.out.println("\nJOB " + job.getJobId() + " ASSIGNED TO " + self + "\n");
-
-                //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
-                ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
-                st.setTimeoutEvent(new JobTimeout(st, job));
-                trigger(st, timerPort);
-            }
+            //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
+            ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
+            st.setTimeoutEvent(new JobTimeout(st, job));
+            trigger(st, timerPort);
+            //}
         }
     };
 
@@ -223,13 +221,17 @@ public final class ResourceManager extends ComponentDefinition {
 
             Job job = event.getJob();
 
-            //System.out.println("JOB " + job.getJobId() + " RECORDING TIME FOR TASK " + job.getJobNo());
             Snapshot.record(job.getJobId(), job.getJobNo());
             //System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
 
-            trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
+            //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
+            if (pendingJobs.size() > 0) {
+                Job nextjob = pendingJobs.remove();
+                nextjob.setDestination(self);
+                trigger(nextjob, networkPort);
+            }
         }
     };
 
@@ -287,7 +289,7 @@ public final class ResourceManager extends ComponentDefinition {
 
                 int rand = random.nextInt(copy.size());
 
-                System.out.println(rand + " SCHEDULING JOB " + event.getId() + " TaskNo : " + index);
+                //System.out.println(rand + " SCHEDULING JOB " + event.getId());
 
                 Address peer = copy.get(rand);
                 copy.remove(peer);
@@ -322,13 +324,23 @@ public final class ResourceManager extends ComponentDefinition {
 
     private RequestResources.Response findLeastLoaded(LinkedList<RequestResources.Response> list) {
 
-        int load = 0;
         RequestResources.Response peer = null;
 
+          //find by resources
+//        int load = 0;
+//        for (RequestResources.Response res : list) {
+//            int total = res.getNumCpus() + res.getAmountMemInMb();
+//            if (total > load) {
+//                load = total;
+//                peer = res;
+//            }
+//        
+        //find by queue size
+        int min = Integer.MAX_VALUE;
+
         for (RequestResources.Response res : list) {
-            int total = res.getNumCpus() + res.getAmountMemInMb();
-            if (total > load) {
-                load = total;
+            if (res.getQueueSize() < min) {
+                min = res.getQueueSize();
                 peer = res;
             }
         }

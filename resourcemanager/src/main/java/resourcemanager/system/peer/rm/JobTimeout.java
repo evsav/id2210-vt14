@@ -23,7 +23,7 @@ public class JobTimeout extends Timeout {
         this.job = job;
     }
     
-    public Job getJob(){
+    public Job getJob() {
         return this.job;
     }
 }

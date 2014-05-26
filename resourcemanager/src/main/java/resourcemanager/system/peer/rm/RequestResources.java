@@ -53,9 +53,10 @@ public class RequestResources {
         private final int amountMemInMb;
         private final long jobId;
         private final int noofjobs;
+        private final int queueSize;
 
         public Response(Address source, Address destination, int numCpus, int amountMemInMb, 
-                long jobId, int noofjobs, boolean success) {
+                long jobId, int noofjobs, int queueSize, boolean success) {
             super(source, destination);
             
             this.numCpus = numCpus;
@@ -63,6 +64,7 @@ public class RequestResources {
             this.jobId = jobId;
             this.success = success;
             this.noofjobs = noofjobs;
+            this.queueSize = queueSize;
         }
 
         public int getNumCpus(){
@@ -83,6 +85,10 @@ public class RequestResources {
         
         public int getNoofJobs(){
             return this.noofjobs;
+        }
+        
+        public int getQueueSize(){
+            return this.queueSize;
         }
     }
 
