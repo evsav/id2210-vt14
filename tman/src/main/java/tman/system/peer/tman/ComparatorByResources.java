@@ -39,13 +39,12 @@ public class ComparatorByResources implements Comparator<PeerDescriptor> {
         else if (p1resources > selfresources && p2resources < selfresources){
             return -1;
         }
-
-//        else if (Math.abs(p1resources - selfresources) < Math.abs(p2resources - selfresources)) {
-//            return -1;
-//        }
-//        else if (Math.abs(p1resources - selfresources) > Math.abs(p2resources - selfresources)){
-//            return 1;
-//        }
+        else if (Math.abs(p1resources - selfresources) < Math.abs(p2resources - selfresources)) {
+            return -1;
+        }
+        else if (Math.abs(p1resources - selfresources) > Math.abs(p2resources - selfresources)){
+            return 1;
+        }
         return 0;
     }
 }
