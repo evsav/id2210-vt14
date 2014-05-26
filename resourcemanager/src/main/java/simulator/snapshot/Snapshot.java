@@ -59,12 +59,12 @@ public class Snapshot {
         long end = l.poll();
 
         String line = "JOB " + jobid + " start: " + start + " end: " + end
-                + " duration: " + (end - start) + "ms" + "\n";
+                + " duration: " + (end - start) + "\n";
         System.out.print(line);
         FileIO.append(line, FILENAME);
     }
 
-    public static void record(Long jobid) {
+    public static void record(Long jobid, int bound) {
 
         List<Long> test = null;
         List<Long> t = ((test = performance.get(jobid)) == null) ? new LinkedList<Long>() : test;
@@ -72,7 +72,7 @@ public class Snapshot {
         t.add(System.currentTimeMillis());
         performance.put(jobid, t);
         
-        if(t.size() == 2){
+        if(t.size() == bound){
             flush(jobid, t);
             performance.remove(jobid);
         }

@@ -49,11 +49,8 @@ public final class ResourceManager extends ComponentDefinition {
     Negative<Web> webPort = negative(Web.class);
     Positive<CyclonSamplePort> cyclonSamplePort = positive(CyclonSamplePort.class);
     Positive<TManSamplePort> tmanPort = positive(TManSamplePort.class);
-    //ArrayList<Address> neighbours = new ArrayList<Address>();
+    ArrayList<Address> neighbours = new ArrayList<Address>();
 
-    //--to work with Tman
-    ArrayList<PeerDescriptor> neighbours = new ArrayList<PeerDescriptor>();
-    
     private Address self;
     private RmConfiguration configuration;
     Random random;
@@ -64,8 +61,7 @@ public final class ResourceManager extends ComponentDefinition {
     private ConcurrentHashMap<Long, RequestResource> jobQueue;
     private Map<Long, RequestResource> inProgress;
     private LinkedList<Job> pendingJobs;
-    
-    
+
     Comparator<PeerDescriptor> peerAgeComparator = new Comparator<PeerDescriptor>() {
         @Override
         public int compare(PeerDescriptor t, PeerDescriptor t1) {
@@ -88,7 +84,6 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleResourceAllocationResponse, networkPort);
         subscribe(jobDaemon, networkPort);
         subscribe(handleJobComplete, networkPort);
-        subscribe(handleTManSample, tmanPort);
     }
 
     Handler<RmInit> handleInit = new Handler<RmInit>() {
@@ -123,8 +118,7 @@ public final class ResourceManager extends ComponentDefinition {
             if (neighbours.isEmpty()) {
                 return;
             }
-            //Address dest = neighbours.get(random.nextInt(neighbours.size()));
-            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
+            Address dest = neighbours.get(random.nextInt(neighbours.size()));
         }
     };
 
@@ -132,22 +126,18 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(RequestResources.Request event) {
 
-            System.out.println(self.getId() + " PROBED BY " + event.getSource().getId());
-
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
             trigger(new RequestResources.Response(self, event.getSource(),
                     availableResources.getNumFreeCpus(),
                     availableResources.getFreeMemInMbs(),
-                    event.getJobId(), success), networkPort);
+                    event.getJobId(), pendingJobs.size(), success), networkPort);
         }
     };
 
     Handler<RequestResources.Response> handleResourceAllocationResponse = new Handler<RequestResources.Response>() {
         @Override
         public void handle(RequestResources.Response event) {
-
-            System.out.println(self.getId() + " RECEIVED FROM PROBE " + event.getSource().getId());
 
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
 
@@ -157,22 +147,23 @@ public final class ResourceManager extends ComponentDefinition {
             p.add(event);
             probes.put(event.getJobId(), p);
 
-            if (p.size() == bound) {
+            if (p.size() == PROBES) {
 
-                if (findAvailability(p) > 0) {
-                    //find the least loaded peer to assign the job
-                    Address peer = findLeastLoaded(p);
-                    System.out.println("TWO PROBES ");
-                    RequestResource job = jobQueue.get(event.getJobId());
-                    
-                    Job assign = new Job(self, peer, job.getNumCpus(),
-                            job.getMemoryInMbs(), job.getId(), job.getTimeToHoldResource());
+                //if (findAvailability(p) > 0) {
+                //find the least loaded peer to assign the job
+                Address peer = findLeastLoaded(p);
+                //System.out.println(bound + " PROBES ");
+                RequestResource job = jobQueue.get(event.getJobId());
 
-                    trigger(assign, networkPort);
-                }else{
-                    //this job needs rescheduling
-                    inProgress.remove(event.getJobId());
-                }
+                Job assign = new Job(self, peer, job.getNumCpus(),
+                        job.getMemoryInMbs(), job.getId(), job.getTimeToHoldResource());
+
+                trigger(assign, networkPort);
+                //}else{
+                //RESCHEDULING REMOVED
+                //this job needs rescheduling
+                //inProgress.remove(event.getJobId());
+                //}
             }
         }
     };
@@ -185,20 +176,17 @@ public final class ResourceManager extends ComponentDefinition {
             //put the job in the job queue
             pendingJobs.add(event);
 
-            Job job = null;
+            Job job = pendingJobs.remove();
 
-            while ((job = pendingJobs.poll()) != null) {
+            //reserve the resources
+            availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
 
-                //reserve the resources
-                availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
+            System.out.println("\nJOB " + job.getJobId() + " ASSIGNED TO " + self + "\n");
 
-                System.out.println("\nJOB " + job.getJobId() + " ASSIGNED TO " + self + "\n");
-
-                //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
-                ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
-                st.setTimeoutEvent(new JobTimeout(st, job));
-                trigger(st, timerPort);
-            }
+            //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
+            ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
+            st.setTimeoutEvent(new JobTimeout(st, job));
+            trigger(st, timerPort);
         }
     };
 
@@ -212,9 +200,13 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-            Snapshot.record(job.getJobId());
-            
-            trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
+            Snapshot.record(job.getJobId(), PROBES);
+
+            if(pendingJobs.size() > 0){
+                job = pendingJobs.remove();
+                trigger(job, networkPort);
+            }
+            //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
         }
     };
 
@@ -223,7 +215,7 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(JobComplete event) {
 
-            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");            
+            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");
             probes.remove(event.getJobId());
             jobQueue.remove(event.getJobId());
             inProgress.remove(event.getJobId());
@@ -253,38 +245,21 @@ public final class ResourceManager extends ComponentDefinition {
             int index = 0;
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
 
-//            List<Address> copy = new LinkedList<Address>(neighbours);
-            List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
+            List<Address> copy = new LinkedList<Address>(neighbours);
 
-//            for (Entry<Long, RequestResource> entry : set) {
-//                RequestResource job = entry.getValue();
-//
-//                //System.out.println("\n JOB " + job.getId() + " SCHEDULED "+ job.isScheduled());
+            //no need for rescheduling
 //                if (!schedulingInProgress(job)) {
-                    
 //                    inProgress.put(job.getId(), job);
-                    Snapshot.record(event.getId());
-                    
-                    //System.out.println("GOING TO SCHEDULE JOB " + job.getId() + "\n");
-                    //probe bound neighbours
-                    while (index++ < bound) {
+            Snapshot.record(event.getId(), PROBES);
 
-                        Address peer = copy.get(random.nextInt(copy.size())).getAddress();
-                        //System.out.println(self + " PROBING " + current + " NEIGHBOURS " + neighbours.size());
-                        RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
-                        trigger(req, networkPort);
-                        copy.remove(peer);
-                    }
-//                }
-//            }
-        }
-    };
-
-    Handler<TManSample> handleTManSample = new Handler<TManSample>() {
-        @Override
-        public void handle(TManSample event) {
-
-            System.out.print("[RMMANAGER]: TMAN SAMPLE RECEIVED     ");
+            //probe bound neighbours
+            while (index++ < bound) {
+                Address peer = copy.get(random.nextInt(copy.size()));
+                System.out.println("JOB " + event.getId() + " PROBING " + peer.getId());
+                RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
+                trigger(req, networkPort);
+                copy.remove(peer);
+            }
         }
     };
 
@@ -302,22 +277,21 @@ public final class ResourceManager extends ComponentDefinition {
 
     private Address findLeastLoaded(LinkedList<RequestResources.Response> list) {
 
-        int load = 0;
+        int min = Integer.MAX_VALUE;
         Address peer = null;
 
         for (RequestResources.Response res : list) {
-            int total = res.getNumCpus() + res.getAmountMemInMb();
-            if (total > load) {
-                load = total;
-                peer = res.getSource();
+            if(min > res.getQueueSize()){
+                min = res.getQueueSize();
+                peer = res.getDestination();
             }
         }
 
         return peer;
     }
-    
-    private boolean schedulingInProgress(RequestResource job){
-        
+
+    private boolean schedulingInProgress(RequestResource job) {
+
         return inProgress.containsKey(job.getId());
     }
 }
