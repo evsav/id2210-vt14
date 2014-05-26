@@ -173,18 +173,28 @@ public final class ResourceManager extends ComponentDefinition {
         public void handle(Job event) {
 
             //put the job in the job queue
-            pendingJobs.add(event);
+            boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
-            Job job = pendingJobs.remove();
+            if (!success && !pendingJobs.contains(event)) {
+                //put the job in the job queue
+                pendingJobs.add(event);
+                System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
+                return;
+            }
 
+            Snapshot.record(event.getJobId());
             //reserve the resources
-            availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
+            availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
 
-            System.out.println("\nJOB " + job.getJobId() + " ASSIGNED TO " + self + "\n");
+            if (!pendingJobs.isEmpty()) {
+                pendingJobs.remove();
+            }
+
+            System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
             //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
-            ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
-            st.setTimeoutEvent(new JobTimeout(st, job));
+            ScheduleTimeout st = new ScheduleTimeout(event.getJobDuration());
+            st.setTimeoutEvent(new JobTimeout(st, event));
             trigger(st, timerPort);
         }
     };
@@ -199,10 +209,10 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-            Snapshot.record(job.getJobId());
+            //Snapshot.record(job.getJobId());
 
-            if(pendingJobs.size() > 0){
-                job = pendingJobs.remove();
+            if (pendingJobs.size() > 0) {
+                job = pendingJobs.peek();
                 trigger(job, networkPort);
             }
             //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
@@ -280,7 +290,7 @@ public final class ResourceManager extends ComponentDefinition {
         Address peer = null;
 
         for (RequestResources.Response res : list) {
-            if(min > res.getQueueSize()){
+            if (min > res.getQueueSize()) {
                 min = res.getQueueSize();
                 peer = res.getDestination();
             }
