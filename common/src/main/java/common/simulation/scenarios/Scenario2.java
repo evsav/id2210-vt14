@@ -18,8 +18,8 @@ public class Scenario2 extends Scenario {
 
             SimulationScenario.StochasticProcess process0 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(1000));
-                    raise(10, Operations.peerJoin(),
+                    eventInterArrivalTime(constant(100));
+                    raise(100, Operations.peerJoin(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(8), constant(12000)
                     );
@@ -29,10 +29,10 @@ public class Scenario2 extends Scenario {
             System.out.println("Batch resource request");
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(100));
-                    raise(10, Operations.batchRequest(),
+                    eventInterArrivalTime(constant(1000));
+                    raise(1000, Operations.batchRequest(),
                             uniform(0, Integer.MAX_VALUE),
-                            constant(2), constant(12000), constant(2),
+                            constant(4), constant(24000), constant(2),
                             constant(1000)
                     );
                 }
