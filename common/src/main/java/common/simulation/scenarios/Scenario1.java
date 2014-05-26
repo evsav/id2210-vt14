@@ -14,22 +14,21 @@ public class Scenario1 extends Scenario {
             StochasticProcess process0 = new StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(1000));
-                    raise(100, Operations.peerJoin(),
+                    raise(50, Operations.peerJoin(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(8), //cpu num
                             constant(12000) //memory amount
                     );
                 }
             };
-
             StochasticProcess process1 = new StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(1000));
-                    raise(1000, Operations.requestResources(),
+                    raise(1500, Operations.requestResources(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(2), 
                             constant(2000), 
-                            constant(1000)
+                            constant(1000 *60)
                     );
                 }
             };
