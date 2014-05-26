@@ -59,7 +59,7 @@ public class Snapshot {
         long end = l.poll();
 
         String line = "JOB " + jobid + " start: " + start + " end: " + end
-                + " duration: " + (end - start) + "ms" + "\n";
+                + " duration: " + (end - start) + "\n";
         System.out.print(line);
         FileIO.append(line, FILENAME);
     }

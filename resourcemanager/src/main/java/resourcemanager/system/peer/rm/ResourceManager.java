@@ -3,7 +3,6 @@ package resourcemanager.system.peer.rm;
 import common.configuration.RmConfiguration;
 import common.peer.AvailableResources;
 import common.simulation.BatchRequestResource;
-import common.simulation.RequestResource;
 import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
 import cyclon.system.peer.cyclon.PeerDescriptor;
@@ -13,9 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,10 +143,6 @@ public final class ResourceManager extends ComponentDefinition {
 
             int noofjobs = event.getNoofJobs();
 
-            //System.out.println(self.getId() + " RECEIVED FROM PROBE " + event.getSource().getId());
-            int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
-            bound *= noofjobs;
-
             //collect the probes
             LinkedList<RequestResources.Response> p = probes.get(event.getJobId());
             p = (p == null) ? new LinkedList<RequestResources.Response>() : p;
@@ -157,11 +150,10 @@ public final class ResourceManager extends ComponentDefinition {
 
             probes.put(event.getJobId(), p);
 
-            //System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
-            if (p.size() == (2 * noofjobs)) {
+            System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
+            if (p.size() == (PROBES * noofjobs)) {
 
-//                if (findAvailability(p) > 0) {
-                //System.out.println((p.size()) + " PROBES ");
+                System.out.println((p.size()) + " PROBES ");
                 BatchRequestResource job = jobQueue.get(event.getJobId());
 
                 //assign tasks to the least loaded workers
@@ -171,19 +163,11 @@ public final class ResourceManager extends ComponentDefinition {
                     RequestResources.Response peer = findLeastLoaded(p);
                     p.remove(peer);
 
-                    System.out.println("ASSIGNING TASK " + i + " TO " + peer.getSource().getId());
-
                     Job assign = new Job(self, peer.getSource(), job.getNumCpus() / 2,
                             job.getMemoryInMbs() / 2, job.getId(), i, job.getTimeToHoldResource());
 
                     trigger(assign, networkPort);
                 }
-//                } 
-//                else {
-//                    //RESCHEDULING REMOVED
-//                    //this job needs rescheduling
-//                    inProgress.remove(event.getJobId());
-//                }
             }
         }
     };
@@ -196,10 +180,7 @@ public final class ResourceManager extends ComponentDefinition {
             //put the job in the job queue
             pendingJobs.add(event);
 
-            Job job = null;
-
-            //while (pendingJobs.size() > 0 /*&& ((job = pendingJobs.remove()) != null)*/) {
-            job = pendingJobs.remove();
+            Job job = pendingJobs.remove();
 
             //reserve the resources
             availableResources.allocate(job.getNumCpus(), job.getAmountMemInMb());
@@ -210,7 +191,6 @@ public final class ResourceManager extends ComponentDefinition {
             ScheduleTimeout st = new ScheduleTimeout(job.getJobDuration());
             st.setTimeoutEvent(new JobTimeout(st, job));
             trigger(st, timerPort);
-            //}
         }
     };
 
@@ -229,7 +209,6 @@ public final class ResourceManager extends ComponentDefinition {
             //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
             if (pendingJobs.size() > 0) {
                 Job nextjob = pendingJobs.remove();
-                nextjob.setDestination(self);
                 trigger(nextjob, networkPort);
             }
         }
@@ -325,16 +304,6 @@ public final class ResourceManager extends ComponentDefinition {
     private RequestResources.Response findLeastLoaded(LinkedList<RequestResources.Response> list) {
 
         RequestResources.Response peer = null;
-
-          //find by resources
-//        int load = 0;
-//        for (RequestResources.Response res : list) {
-//            int total = res.getNumCpus() + res.getAmountMemInMb();
-//            if (total > load) {
-//                load = total;
-//                peer = res;
-//            }
-//        
         //find by queue size
         int min = Integer.MAX_VALUE;
 
@@ -346,10 +315,5 @@ public final class ResourceManager extends ComponentDefinition {
         }
 
         return peer;
-    }
-
-    private boolean schedulingInProgress(RequestResource job) {
-
-        return inProgress.containsKey(job.getId());
     }
 }
