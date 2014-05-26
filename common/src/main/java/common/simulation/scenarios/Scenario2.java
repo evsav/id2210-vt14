@@ -19,7 +19,7 @@ public class Scenario2 extends Scenario {
             SimulationScenario.StochasticProcess process0 = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(100));
-                    raise(100, Operations.peerJoin(),
+                    raise(30, Operations.peerJoin(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(8), constant(12000)
                     );
@@ -30,7 +30,7 @@ public class Scenario2 extends Scenario {
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(1000));
-                    raise(1000, Operations.batchRequest(),
+                    raise(1500, Operations.batchRequest(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(4), constant(24000), constant(2),
                             constant(1000)
