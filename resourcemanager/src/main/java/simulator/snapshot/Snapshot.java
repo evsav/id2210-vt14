@@ -64,7 +64,7 @@ public class Snapshot {
         FileIO.append(line, FILENAME);
     }
 
-    public static void record(Long jobid, int bound) {
+    public static void record(Long jobid) {
 
         List<Long> test = null;
         List<Long> t = ((test = performance.get(jobid)) == null) ? new LinkedList<Long>() : test;
@@ -72,7 +72,7 @@ public class Snapshot {
         t.add(System.currentTimeMillis());
         performance.put(jobid, t);
         
-        if(t.size() == bound){
+        if(t.size() == 2){
             flush(jobid, t);
             performance.remove(jobid);
         }

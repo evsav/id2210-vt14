@@ -31,7 +31,6 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.web.Web;
 import simulator.snapshot.Snapshot;
 import system.peer.RmPort;
-import tman.system.peer.tman.TManSample;
 import tman.system.peer.tman.TManSamplePort;
 
 /**
@@ -56,7 +55,7 @@ public final class ResourceManager extends ComponentDefinition {
     Random random;
     private AvailableResources availableResources;
 
-    private final int PROBES = 2;
+    private final int PROBES = 4;
     private ConcurrentHashMap<Long, LinkedList<RequestResources.Response>> probes;
     private ConcurrentHashMap<Long, RequestResource> jobQueue;
     private Map<Long, RequestResource> inProgress;
@@ -200,7 +199,7 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-            Snapshot.record(job.getJobId(), PROBES);
+            Snapshot.record(job.getJobId());
 
             if(pendingJobs.size() > 0){
                 job = pendingJobs.remove();
@@ -250,7 +249,7 @@ public final class ResourceManager extends ComponentDefinition {
             //no need for rescheduling
 //                if (!schedulingInProgress(job)) {
 //                    inProgress.put(job.getId(), job);
-            Snapshot.record(event.getId(), PROBES);
+            Snapshot.record(event.getId());
 
             //probe bound neighbours
             while (index++ < bound) {
