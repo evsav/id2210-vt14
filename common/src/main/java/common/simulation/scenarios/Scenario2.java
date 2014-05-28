@@ -29,10 +29,10 @@ public class Scenario2 extends Scenario {
             System.out.println("Batch resource request");
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(200));
+                    eventInterArrivalTime(constant(1000));
                     raise(5000, Operations.batchRequest(),
                             uniform(0, Integer.MAX_VALUE),
-                            constant(4), constant(24000), constant(2),
+                            constant(4), constant(4000), constant(2),
                             constant(1000 * 60)
                     );
                 }
