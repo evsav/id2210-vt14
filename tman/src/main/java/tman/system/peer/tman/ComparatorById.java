@@ -20,6 +20,7 @@ public class ComparatorById implements Comparator<Address> {
     @Override
     public int compare(Address o1, Address o2) {
         assert (o1.getId() == o2.getId());
+        
         if (o1.getId() < self.getId() && o2.getId() > self.getId()) {
             return 1;
         } else if (o2.getId() < self.getId() && o1.getId() > self.getId()) {
