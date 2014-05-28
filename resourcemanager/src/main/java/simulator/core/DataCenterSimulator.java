@@ -33,6 +33,7 @@ import common.simulation.RequestResource;
 import common.simulation.SimulatorInit;
 import java.net.InetAddress;
 import java.util.Random;
+import libstat.LibStat;
 import se.sics.ipasdistances.AsIpGenerator;
 import system.peer.RmPort;
 import se.sics.kompics.p2p.experiment.dsl.events.TerminateExperiment;
@@ -134,6 +135,8 @@ public final class DataCenterSimulator extends ComponentDefinition {
         @Override
         public void handle(TerminateExperiment event) {
             System.err.println("Finishing experiment - terminating....");
+            LibStat libstat = new LibStat("resManager.out");
+            libstat.generateReport();
             System.exit(0);
         }
     };
