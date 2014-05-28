@@ -82,7 +82,6 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleResourceAllocationResponse, networkPort);
         subscribe(jobDaemon, networkPort);
         subscribe(handleJobComplete, networkPort);
-        subscribe(handleTManSample, tmanPort);
     }
 
     Handler<RmInit> handleInit = new Handler<RmInit>() {
@@ -126,7 +125,6 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(RequestResources.Request event) {
 
-            //System.out.println(self.getId() + " PROBED BY " + event.getSource().getId());
             //check for available resources for a task of the job
             boolean success = availableResources.isAvailable(event.getNumCpus() / 2, event.getAmountMemInMb() / 2);
 
@@ -150,10 +148,10 @@ public final class ResourceManager extends ComponentDefinition {
 
             probes.put(event.getJobId(), p);
 
-            System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
+            //System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
             if (p.size() == (PROBES * noofjobs)) {
 
-                System.out.println((p.size()) + " PROBES ");
+                //System.out.println((p.size()) + " PROBES ");
                 BatchRequestResource job = jobQueue.get(event.getJobId());
 
                 //assign tasks to the least loaded workers
@@ -179,11 +177,9 @@ public final class ResourceManager extends ComponentDefinition {
 
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
-            if (!success /*&& !pendingJobs.contains(event)*/) {
-                if (!pendingJobs.contains(event)) {
-                    //put the job at the end of the job queue
-                    pendingJobs.add(event);
-                }
+            if (!success && !pendingJobs.contains(event)) {
+                //put the job at the end of the job queue
+                pendingJobs.add(event);
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
                 return;
             }
@@ -212,7 +208,7 @@ public final class ResourceManager extends ComponentDefinition {
 
             Job job = event.getJob();
 
-            //System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
+            System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
 
@@ -257,27 +253,24 @@ public final class ResourceManager extends ComponentDefinition {
             if (noOfJobs > neighbours.size() || neighbours.isEmpty()) {
                 return;
             }
-            
+
             int index = 0;
-            //int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
             int bound = PROBES * noOfJobs;
             if (bound > neighbours.size()) {
                 return;
             }
 
-            jobQueue.put(event.getId(), event);
-            
+            //jobQueue.put(event.getId(), event);
+
             List<Address> copy = new LinkedList<Address>(neighbours);
 
             Snapshot.record(event.getId(), bound);
 
-            //System.out.println("NO OF PROBES " + bound + " NEIGHBORS SIZE " + copy.size());
             //probe PROBES * noofjobs workers
             while (index++ < bound) {
 
                 int rand = random.nextInt(copy.size());
 
-                //System.out.println(rand + " SCHEDULING JOB " + event.getId());
                 Address peer = copy.get(rand);
                 copy.remove(peer);
                 //System.out.println(self + " REQUESTING RESOURCES for job " + event.getId() + " FROM NEIGHBR " + peer.getId());
@@ -288,26 +281,6 @@ public final class ResourceManager extends ComponentDefinition {
             }
         }
     };
-
-    Handler<TManSample> handleTManSample = new Handler<TManSample>() {
-        @Override
-        public void handle(TManSample event) {
-
-            //TMAN NOT USED IN BASIC SPARROW IMPLEMENTATION
-        }
-    };
-
-    private int findAvailability(LinkedList<RequestResources.Response> list) {
-
-        int success = 0;
-
-        for (RequestResources.Response res : list) {
-            if (res.getSuccess()) {
-                success++;
-            }
-        }
-        return success;
-    }
 
     private RequestResources.Response findLeastLoaded(LinkedList<RequestResources.Response> list) {
 
