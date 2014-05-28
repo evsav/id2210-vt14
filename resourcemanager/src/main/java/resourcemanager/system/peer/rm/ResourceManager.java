@@ -179,9 +179,11 @@ public final class ResourceManager extends ComponentDefinition {
 
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
-            if (!success && !pendingJobs.contains(event)) {
-                //put the job in the job queue
-                pendingJobs.add(event);
+            if (!success /*&& !pendingJobs.contains(event)*/) {
+                if (!pendingJobs.contains(event)) {
+                    //put the job at the end of the job queue
+                    pendingJobs.add(event);
+                }
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
                 return;
             }
@@ -255,17 +257,16 @@ public final class ResourceManager extends ComponentDefinition {
             if (noOfJobs > neighbours.size() || neighbours.isEmpty()) {
                 return;
             }
-
-            jobQueue.put(event.getId(), event);
-
+            
             int index = 0;
-            int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
-            bound *= noOfJobs;
-
+            //int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
+            int bound = PROBES * noOfJobs;
             if (bound > neighbours.size()) {
                 return;
             }
 
+            jobQueue.put(event.getId(), event);
+            
             List<Address> copy = new LinkedList<Address>(neighbours);
 
             Snapshot.record(event.getId(), bound);
