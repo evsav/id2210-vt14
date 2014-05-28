@@ -18,13 +18,16 @@ public class RequestResources {
         private final int amountMemInMb;
         private final long jobId;
         private final int noofjobs;
+        private final int timeToHoldResources;
 
-        public Request(Address source, Address destination, int numCpus, int amountMemInMb, long jobId, int noofjobs) {
+        public Request(Address source, Address destination, int numCpus,
+                int amountMemInMb, long jobId, int noofjobs, int timeToHoldResources) {
             super(source, destination);
             this.numCpus = numCpus;
             this.amountMemInMb = amountMemInMb;
             this.jobId = jobId;
             this.noofjobs = noofjobs;
+            this.timeToHoldResources = timeToHoldResources;
         }
 
         public int getAmountMemInMb() {
@@ -38,9 +41,13 @@ public class RequestResources {
         public long getJobId() {
             return this.jobId;
         }
-        
-        public int getNoofJobs(){
+
+        public int getNoofJobs() {
             return this.noofjobs;
+        }
+
+        public int getTimeToHoldResources() {
+            return this.timeToHoldResources;
         }
     }
 
@@ -54,27 +61,29 @@ public class RequestResources {
         private final long jobId;
         private final int noofjobs;
         private final int queueSize;
+        private final int timeToHoldResources;
 
-        public Response(Address source, Address destination, int numCpus, int amountMemInMb, 
-                long jobId, int noofjobs, int queueSize, boolean success) {
+        public Response(Address source, Address destination, int numCpus, int amountMemInMb,
+                long jobId, int noofjobs, int queueSize, int timeToHoldResources, boolean success) {
             super(source, destination);
-            
+
             this.numCpus = numCpus;
             this.amountMemInMb = amountMemInMb;
             this.jobId = jobId;
             this.success = success;
             this.noofjobs = noofjobs;
             this.queueSize = queueSize;
+            this.timeToHoldResources = timeToHoldResources;
         }
 
-        public int getNumCpus(){
+        public int getNumCpus() {
             return this.numCpus;
         }
-        
-        public int getAmountMemInMb(){
+
+        public int getAmountMemInMb() {
             return this.amountMemInMb;
         }
-        
+
         public long getJobId() {
             return this.jobId;
         }
@@ -82,13 +91,17 @@ public class RequestResources {
         public boolean getSuccess() {
             return this.success;
         }
-        
-        public int getNoofJobs(){
+
+        public int getNoofJobs() {
             return this.noofjobs;
         }
-        
-        public int getQueueSize(){
+
+        public int getQueueSize() {
             return this.queueSize;
+        }
+
+        public int getTimeToHoldResources() {
+            return this.timeToHoldResources;
         }
     }
 

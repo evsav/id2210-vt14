@@ -54,7 +54,7 @@ public final class ResourceManager extends ComponentDefinition {
     Random random;
     private AvailableResources availableResources;
 
-    private final int PROBES = 2;
+    private final int PROBES = 4;
     private ConcurrentHashMap<Long, LinkedList<RequestResources.Response>> probes;
     private ConcurrentHashMap<Long, BatchRequestResource> jobQueue;
     private Map<Long, BatchRequestResource> inProgress;
@@ -126,12 +126,17 @@ public final class ResourceManager extends ComponentDefinition {
         public void handle(RequestResources.Request event) {
 
             //check for available resources for a task of the job
-            boolean success = availableResources.isAvailable(event.getNumCpus() / 2, event.getAmountMemInMb() / 2);
+            boolean success = availableResources.isAvailable(event.getNumCpus() / event.getNoofJobs(),
+                    event.getAmountMemInMb() / event.getNoofJobs());
 
             trigger(new RequestResources.Response(self, event.getSource(),
-                    availableResources.getNumFreeCpus(),
-                    availableResources.getFreeMemInMbs(),
-                    event.getJobId(), event.getNoofJobs(), pendingJobs.size(), success), networkPort);
+                    event.getNumCpus(),
+                    event.getAmountMemInMb(),
+                    event.getJobId(), 
+                    event.getNoofJobs(),
+                    pendingJobs.size(), 
+                    event.getTimeToHoldResources(),
+                    success), networkPort);
         }
     };
 
@@ -151,9 +156,6 @@ public final class ResourceManager extends ComponentDefinition {
             //System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
             if (p.size() == (PROBES * noofjobs)) {
 
-                //System.out.println((p.size()) + " PROBES ");
-                BatchRequestResource job = jobQueue.get(event.getJobId());
-
                 //assign tasks to the least loaded workers
                 for (int i = 0; i < noofjobs; i++) {
 
@@ -161,8 +163,8 @@ public final class ResourceManager extends ComponentDefinition {
                     RequestResources.Response peer = findLeastLoaded(p);
                     p.remove(peer);
 
-                    Job assign = new Job(self, peer.getSource(), job.getNumCpus() / 2,
-                            job.getMemoryInMbs() / 2, job.getId(), i, job.getTimeToHoldResource());
+                    Job assign = new Job(self, peer.getSource(), event.getNumCpus() / noofjobs,
+                            event.getAmountMemInMb()/ noofjobs, event.getJobId(), i, event.getTimeToHoldResources());
 
                     trigger(assign, networkPort);
                 }
@@ -275,7 +277,7 @@ public final class ResourceManager extends ComponentDefinition {
                 copy.remove(peer);
                 //System.out.println(self + " REQUESTING RESOURCES for job " + event.getId() + " FROM NEIGHBR " + peer.getId());
                 RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(),
-                        event.getMemoryInMbs(), event.getId(), event.getNoofJobs());
+                        event.getMemoryInMbs(), event.getId(), event.getNoofJobs(), event.getTimeToHoldResource());
 
                 trigger(req, networkPort);
             }
