@@ -19,6 +19,14 @@ public class BatchRequestResource extends Event {
     private final int timeToHoldResource;
     private final int noofJobs;
 
+    /**
+     * This class represents a composite job, containing sub-jobs
+     * @param id
+     * @param numCpus - the number of requested cpus
+     * @param memoryInMbs - the amount of requested memory
+     * @param noofJobs - the number of sub-jobs
+     * @param timeToHoldResource - 
+     */
     public BatchRequestResource(long id, int numCpus, int memoryInMbs, int noofJobs, int timeToHoldResource) {
         this.id = id;
         this.numCpus = numCpus;
