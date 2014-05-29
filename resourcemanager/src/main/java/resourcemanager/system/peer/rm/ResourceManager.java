@@ -29,7 +29,6 @@ import se.sics.kompics.timer.Timer;
 import se.sics.kompics.web.Web;
 import simulator.snapshot.Snapshot;
 import system.peer.RmPort;
-import tman.system.peer.tman.TManSample;
 import tman.system.peer.tman.TManSamplePort;
 
 /**
@@ -54,7 +53,7 @@ public final class ResourceManager extends ComponentDefinition {
     Random random;
     private AvailableResources availableResources;
 
-    private final int PROBES = 4;
+    private final int PROBES = 2;
     private ConcurrentHashMap<Long, LinkedList<RequestResources.Response>> probes;
     private ConcurrentHashMap<Long, BatchRequestResource> jobQueue;
     private Map<Long, BatchRequestResource> inProgress;
@@ -153,7 +152,8 @@ public final class ResourceManager extends ComponentDefinition {
 
             probes.put(event.getJobId(), p);
 
-            //System.out.println("JOB " + event.getJobId() + " PROBES SIZE " + p.size() + " NOOFJOBS " + (noofjobs));
+            //as soon as we collect all the responses from the probed neighbours
+            //its time to start assigning jobs to the least loaded of them
             if (p.size() == (PROBES * noofjobs)) {
 
                 //assign tasks to the least loaded workers
@@ -164,7 +164,7 @@ public final class ResourceManager extends ComponentDefinition {
                     p.remove(peer);
 
                     Job assign = new Job(self, peer.getSource(), event.getNumCpus() / noofjobs,
-                            event.getAmountMemInMb()/ noofjobs, event.getJobId(), i, event.getTimeToHoldResources());
+                            event.getAmountMemInMb()/ noofjobs, event.getJobId(), i, event.getTimeToHoldResources() / noofjobs);
 
                     trigger(assign, networkPort);
                 }
@@ -186,6 +186,7 @@ public final class ResourceManager extends ComponentDefinition {
                 return;
             }
 
+            //record the time just before the resources are allocated to the job
             Snapshot.record(event.getJobId(), event.getJobNo());
             //reserve the resources
             availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
@@ -196,8 +197,7 @@ public final class ResourceManager extends ComponentDefinition {
 
             System.out.println("\nJOB " + event.getJobId() + ", TASK " + event.getJobNo() + ", ASSIGNED TO " + self + "\n");
 
-            //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
-            ScheduleTimeout st = new ScheduleTimeout(event.getJobDuration());
+            ScheduleTimeout st = new ScheduleTimeout(event.getTimeToHoldResources());
             st.setTimeoutEvent(new JobTimeout(st, event));
             trigger(st, timerPort);
         }
@@ -256,6 +256,7 @@ public final class ResourceManager extends ComponentDefinition {
                 return;
             }
 
+            //calculate how many probes we need to do
             int index = 0;
             int bound = PROBES * noOfJobs;
             if (bound > neighbours.size()) {

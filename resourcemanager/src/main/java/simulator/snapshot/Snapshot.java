@@ -56,6 +56,7 @@ public class Snapshot {
         LinkedList<Long> l = (LinkedList<Long>) measure;
 
         long start = l.poll();
+        l.poll();
         long end = l.poll();
 
         String line = "JOB, " + jobid + ", start, " + start + ", end, " + end
@@ -69,19 +70,20 @@ public class Snapshot {
         List<Long> test = null;
         List<Long> t = ((test = performance.get(jobid)) == null) ? new LinkedList<Long>() : test;
 
-        if(t.size() <= 1){
-            t.add(System.currentTimeMillis());
-        }
-        else {
-            t.add(1, System.currentTimeMillis());
-        }
+//        if(t.size() <= 1){
+//            t.add(System.currentTimeMillis());
+//        }
+//        else {
+//            t.add(1, System.currentTimeMillis());
+//        }
+        t.add(System.currentTimeMillis());
         
         performance.put(jobid, t);
         
         //System.out.println("\n PERFORMANCE TABLE " + performance + "\n");
         
         //the batch is finished
-        if(jobNo == 1){
+        if(t.size() == 3){
             System.out.println("\nBENCHMARKING\n");
             flush(jobid, t);
             performance.remove(jobid);

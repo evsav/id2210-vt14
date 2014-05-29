@@ -30,8 +30,8 @@ public class Job extends Message {
         this.numCpus = numCpus;
         this.amountMemInMb = amountMemInMb;
         this.jobId = jobId;
-        this.timeToHoldResource = timeToHoldResource;
         this.jobno = jobno;
+        this.timeToHoldResource = timeToHoldResource;
     }
     
     public int getNumCpus(){
@@ -50,7 +50,7 @@ public class Job extends Message {
         return this.jobno;
     }
     
-    public int getJobDuration(){
+    public int getTimeToHoldResources(){
         return this.timeToHoldResource;
     }
 }
