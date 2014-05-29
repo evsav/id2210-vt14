@@ -23,7 +23,7 @@ public class Scenario1 extends Scenario {
             };
             StochasticProcess process1 = new StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(1000));
+                    eventInterArrivalTime(constant(300));
                     raise(5000, Operations.requestResources(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(2), 

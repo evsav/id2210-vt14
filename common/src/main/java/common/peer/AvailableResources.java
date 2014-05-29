@@ -13,6 +13,7 @@ public class AvailableResources {
 
     private volatile int numFreeCpus;
     private volatile int freeMemInMbs;
+    private volatile int queueSize;
 
     public AvailableResources(int numFreeCpus, int freeMemInMbs) {
         this.numFreeCpus = numFreeCpus;
@@ -29,6 +30,7 @@ public class AvailableResources {
         if (numFreeCpus >= numCpus && freeMemInMbs >= memInMbs) {
             numFreeCpus -= numCpus;
             freeMemInMbs -= memInMbs;
+
             return true;
         }
 
@@ -36,11 +38,11 @@ public class AvailableResources {
     }
 
     public synchronized void release(int numCpus, int memInMbs) {
-        
+
         if (numCpus <= 0 || memInMbs <= 0) {
             throw new IllegalArgumentException("Invalid numbCpus or mem");
         }
-        
+
         numFreeCpus += numCpus;
         freeMemInMbs += memInMbs;
     }
@@ -51,5 +53,13 @@ public class AvailableResources {
 
     public int getFreeMemInMbs() {
         return freeMemInMbs;
+    }
+
+    public void setQueueSize(int queueSize) {
+        this.queueSize = queueSize;
+    }
+
+    public int getQueueSize() {
+        return this.queueSize;
     }
 }
