@@ -90,13 +90,13 @@ public final class TMan extends ComponentDefinition {
         public void handle(TManSchedule event) {
             Snapshot.updateTManPartners(self, tmanPartners);
 
-            //select a random peer from the first half
-            if (!tmanPartners.isEmpty() && tmanPartners.size() > 4) {
+            if (!tmanPartners.isEmpty()) {
                 tmanPartners = queueBasedDeduplication(new LinkedList<PeerDescriptor>(tmanPartners));
                 Collections.sort(tmanPartners, new ComparatorByResources(self, availableResources));
                 Collections.sort(tmanPartners, new ComparatorByQueue());
 
-                int randomIndex = tmanPartners.size() > 1 ? new Random().nextInt(tmanPartners.size() / 2) : 0;
+                int randomIndex = (((int)tmanPartners.size() / 3) == 0) ?
+                        0 : new Random().nextInt((int)tmanPartners.size() / 3);
                 PeerDescriptor peer = tmanPartners.get(randomIndex);
 
                 PeerDescriptor mydescriptor = new PeerDescriptor(self, availableResources);
@@ -114,7 +114,7 @@ public final class TMan extends ComponentDefinition {
                 trigger(new ExchangeMsg.Request(UUID.randomUUID(), buffer, self, peer.getAddress()), networkPort);
 
                 // Publish the sample to connected components
-                List<PeerDescriptor> toSend = new LinkedList<PeerDescriptor>(tmanPartners.subList(0, 4));
+                List<PeerDescriptor> toSend = new LinkedList<PeerDescriptor>(tmanPartners.subList(0, randomIndex));
                 //Collections.sort(toSend, new ComparatorByResources(peer.getAddress(), peer.getResources()));
 
                 trigger(new TManSample(toSend), tmanPort);
@@ -245,7 +245,6 @@ public final class TMan extends ComponentDefinition {
         List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(input);
         Map<Address, PeerDescriptor> clear = new HashMap<Address, PeerDescriptor>();
 
-        //some Loop Tiling for speed
         for (PeerDescriptor pd1 : copy) {
 
             if (!clear.containsKey(pd1.getAddress())) {
@@ -292,7 +291,7 @@ public final class TMan extends ComponentDefinition {
 
         return new LinkedList<PeerDescriptor>(clear.values());
     }
-
+    
     private void printList(List<PeerDescriptor> list) {
         System.out.println("CURRENT LIST ");
         for (PeerDescriptor peer : list) {
