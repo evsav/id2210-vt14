@@ -20,6 +20,7 @@ public class Snapshot {
 
     public static void init(int numOfStripes) {
         FileIO.write("", FILENAME);
+        FileIO.clear(FILENAME);
     }
 
     public static void addPeer(Address address, AvailableResources availableResources) {

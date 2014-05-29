@@ -6,15 +6,12 @@ import common.simulation.RequestResource;
 import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
 import cyclon.system.peer.cyclon.PeerDescriptor;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,6 +131,7 @@ public final class ResourceManager extends ComponentDefinition {
             if (!success && !pendingJobs.contains(event)) {
                 //put the job in the job queue
                 pendingJobs.add(event);
+                availableResources.setQueueSize(pendingJobs.size());
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
                 return;
             }
@@ -146,6 +144,7 @@ public final class ResourceManager extends ComponentDefinition {
 
             if (!pendingJobs.isEmpty()) {
                 pendingJobs.remove();
+                availableResources.setQueueSize(pendingJobs.size());
             }
 
             System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
@@ -203,28 +202,21 @@ public final class ResourceManager extends ComponentDefinition {
 
             System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
 
-            jobQueue.put(event.getId(), event);
-            Set<Entry<Long, RequestResource>> set = jobQueue.entrySet();
-
             List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
 
-            if (copy.size() == 4) {
+            if (copy.size() > 0) {
                 Snapshot.record(event.getId());
 
-                //assign the job to a random peer
-                //for (int i = 0; i < 2; i++) {
-                PeerDescriptor peer = copy.get(random.nextInt(copy.size()));
+                //assign the job to the best peer
+                PeerDescriptor peer = copy.get(0); //copy.get(random.nextInt(copy.size()));
                 copy.remove(peer);
                 System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
-//            RequestResources.Request req = new RequestResources.Request(self, peer.getAddress(),
-//                    event.getNumCpus(), event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
 
                 Job assign = new Job(self, peer.getAddress(), event.getNumCpus(),
                         event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
 
                 trigger(assign, networkPort);
             }
-            //}
         }
     };
 

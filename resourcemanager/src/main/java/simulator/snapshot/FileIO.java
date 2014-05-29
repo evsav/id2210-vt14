@@ -15,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package simulator.snapshot;
 
 import java.io.BufferedWriter;
@@ -29,76 +28,88 @@ import java.io.Writer;
 /**
  * Class to work with text files.
  */
-
 public class FileIO {
 
-	/**
-	 * Writes a string into a file.
-	 * @param str Specifies the string that should be written into file.
-	 * @param fileName Specifies the name of storing file.
-	 * @throws IOException Thrown if it can not open the file or write in it. 
- 	 */
-	public static void write(String str, String fileName) {
-		try {
-			Writer output = null;
-			FileWriter file = new FileWriter(fileName, false);
-			output = new BufferedWriter(file);
-			output.write(str);
-			output.close();
-		}
-		catch(IOException e) {
+    /**
+     * Writes a string into a file.
+     *
+     * @param str Specifies the string that should be written into file.
+     * @param fileName Specifies the name of storing file.
+     * @throws IOException Thrown if it can not open the file or write in it.
+     */
+    public static void write(String str, String fileName) {
+        try {
+            Writer output = null;
+            FileWriter file = new FileWriter(fileName, false);
+            output = new BufferedWriter(file);
+            output.write(str);
+            output.close();
+        } catch (IOException e) {
             System.err.println("can not write in file " + fileName);
-		}
-	}
+        }
+    }
 
-	/**
-	 * Appends a string at the end of an existing file. It the file is not exist it creates it.
-	 * @param str Specifies the string that should be written into file.
-	 * @param fileName Specifies the name of storing file.
-	 * @throws IOException Thrown if it can not open the file or append the content at the of file. 
-	 */
-	public static void append(String str, String fileName) {
-		try {
-			Writer output = null;
-			FileWriter file = new FileWriter(fileName, true);
-			output = new BufferedWriter(file);
-			output.write(str);
-			output.close();
-		}
-		catch(IOException e) {
+    /**
+     * Appends a string at the end of an existing file. It the file is not exist
+     * it creates it.
+     *
+     * @param str Specifies the string that should be written into file.
+     * @param fileName Specifies the name of storing file.
+     * @throws IOException Thrown if it can not open the file or append the
+     * content at the of file.
+     */
+    public static void append(String str, String fileName) {
+        try {
+            Writer output = null;
+            FileWriter file = new FileWriter(fileName, true);
+            output = new BufferedWriter(file);
+            output.write(str);
+            output.close();
+        } catch (IOException e) {
             System.err.println("can not append to file " + fileName);
-		}
-	}
+        }
+    }
 
-	/**
-	 * Reads the content of a file and returns it as a string.
-	 * @param fileName Specifies the name of storing file.
-	 * @return A string that contains the whole content of file.
-	 * @throws IOException Thrown if the the file is not exist. 
-	 */
-	public static String read(String fileName) {
-		int numRead = 0;
-		int curRead = 0;
-		String str = null;
+    /**
+     * Reads the content of a file and returns it as a string.
+     *
+     * @param fileName Specifies the name of storing file.
+     * @return A string that contains the whole content of file.
+     * @throws IOException Thrown if the the file is not exist.
+     */
+    public static String read(String fileName) {
+        int numRead = 0;
+        int curRead = 0;
+        String str = null;
 
-		try {
-			File file = new File(fileName);
-			InputStream in = new FileInputStream(file);
-			long length = file.length();
-			byte[] bytes = new byte[(int)length];
+        try {
+            File file = new File(fileName);
+            InputStream in = new FileInputStream(file);
+            long length = file.length();
+            byte[] bytes = new byte[(int) length];
 
-			while(curRead != length) {
-				numRead = in.read(bytes, curRead, bytes.length - curRead);
-				curRead += numRead;
-			}
-			
-			str = new String(bytes);
-			in.close();
+            while (curRead != length) {
+                numRead = in.read(bytes, curRead, bytes.length - curRead);
+                curRead += numRead;
+            }
+
+            str = new String(bytes);
+            in.close();
         } catch (IOException e) {
             System.err.println("can not read from file " + fileName);
         }
-        
+
         return str;
-	}
-	
+    }
+    
+    public static void clear(String fileName){
+         try {
+            File file = new File(fileName);
+            file.delete();
+            file.createNewFile();
+        } catch (IOException e) {
+            System.err.println("can not append to file " + fileName);
+        }
+    }
+
 }
