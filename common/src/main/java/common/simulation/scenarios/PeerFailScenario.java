@@ -55,7 +55,7 @@ public class PeerFailScenario extends Scenario {
             
             process0.start();
             process1.startAfterTerminationOf(2000, process0);
-            //introduce the churn in the system
+            //introduce peer failure in the system
             failPeersProcess.startAfterTerminationOf(18 * 1000, process0);
             terminateProcess.startAfterTerminationOf(100 * 1000, process1);
         }

@@ -56,10 +56,10 @@ public class PeerChurnScenario extends Scenario {
                     raise(1, Operations.terminate);
                 }
             };
-            
+
             process0.start();
             process1.startAfterTerminationOf(2000, process0);
-            //introduce the churn in the system
+            //introduce churn in the system
             churnProcess.startAfterTerminationOf(10 * 1000, process0);
             terminateProcess.startAfterTerminationOf(100 * 1000, process1);
         }
