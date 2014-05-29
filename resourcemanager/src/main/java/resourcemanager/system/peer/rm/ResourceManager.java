@@ -138,31 +138,24 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(RequestResources.Response event) {
 
-            int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
-
             //collect the probes
             LinkedList<RequestResources.Response> p = probes.get(event.getJobId());
             p = (p == null) ? new LinkedList<RequestResources.Response>() : p;
             p.add(event);
             probes.put(event.getJobId(), p);
 
+            //when the number of received responses becomes equal to the number of 
+            //the probed neighbours, then it's time to find the best one
             if (p.size() == PROBES) {
 
-                //if (findAvailability(p) > 0) {
                 //find the least loaded peer to assign the job
                 Address peer = findLeastLoaded(p);
-                //System.out.println(bound + " PROBES ");
                 RequestResource job = jobQueue.get(event.getJobId());
 
                 Job assign = new Job(self, peer, job.getNumCpus(),
                         job.getMemoryInMbs(), job.getId(), job.getTimeToHoldResource());
 
                 trigger(assign, networkPort);
-                //}else{
-                //RESCHEDULING REMOVED
-                //this job needs rescheduling
-                //inProgress.remove(event.getJobId());
-                //}
             }
         }
     };
@@ -175,13 +168,14 @@ public final class ResourceManager extends ComponentDefinition {
             //put the job in the job queue
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
+            //if there are no resources available, and the job is new, put it in the queue
             if (!success && !pendingJobs.contains(event)) {
-                //put the job in the job queue
                 pendingJobs.add(event);
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
                 return;
             }
 
+            //record the timestamp the moment the resources are found, and before are allocated
             Snapshot.record(event.getJobId());
             //reserve the resources
             availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
@@ -192,7 +186,6 @@ public final class ResourceManager extends ComponentDefinition {
 
             System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
-            //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
             ScheduleTimeout st = new ScheduleTimeout(event.getJobDuration());
             st.setTimeoutEvent(new JobTimeout(st, event));
             trigger(st, timerPort);
@@ -236,7 +229,7 @@ public final class ResourceManager extends ComponentDefinition {
         public void handle(CyclonSample event) {
             //System.out.println("Received samples: " + event.getSample().size());
 
-            // receive a new list of neighbours
+            //receive a new list of neighbours
             neighbours.clear();
             neighbours.addAll(event.getSample());
         }
@@ -249,22 +242,19 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
 
             jobQueue.put(event.getId(), event);
-            Set<Entry<Long, RequestResource>> set = jobQueue.entrySet();
+//            Set<Entry<Long, RequestResource>> set = jobQueue.entrySet();
 
             int index = 0;
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
 
             List<Address> copy = new LinkedList<Address>(neighbours);
 
-            //no need for rescheduling
-//                if (!schedulingInProgress(job)) {
-//                    inProgress.put(job.getId(), job);
             Snapshot.record(event.getId());
 
             //probe bound neighbours
             while (index++ < bound) {
                 Address peer = copy.get(random.nextInt(copy.size()));
-                System.out.println("JOB " + event.getId() + " PROBING " + peer.getId());
+                //System.out.println("JOB " + event.getId() + " PROBING " + peer.getId());
                 RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
                 trigger(req, networkPort);
                 copy.remove(peer);
@@ -272,18 +262,25 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
-    private int findAvailability(LinkedList<RequestResources.Response> list) {
+//    //not used
+//    private int findAvailability(LinkedList<RequestResources.Response> list) {
+//
+//        int success = 0;
+//
+//        for (RequestResources.Response res : list) {
+//            if (res.getSuccess()) {
+//                success++;
+//            }
+//        }
+//        return success;
+//    }
 
-        int success = 0;
-
-        for (RequestResources.Response res : list) {
-            if (res.getSuccess()) {
-                success++;
-            }
-        }
-        return success;
-    }
-
+    /**
+     * finds the least loaded peer, based on the queue size
+     * 
+     * @param list. Contains the responses that were received from the probed neighbours
+     * @return the least loaded neighbour
+     */
     private Address findLeastLoaded(LinkedList<RequestResources.Response> list) {
 
         int min = Integer.MAX_VALUE;
@@ -297,10 +294,5 @@ public final class ResourceManager extends ComponentDefinition {
         }
 
         return peer;
-    }
-
-    private boolean schedulingInProgress(RequestResource job) {
-
-        return inProgress.containsKey(job.getId());
     }
 }
