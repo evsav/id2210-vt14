@@ -19,8 +19,6 @@ public class AvailableResources {
         this.freeMemInMbs = freeMemInMbs;
     }
 
-    
-
     public synchronized boolean isAvailable(int numCpus, int memInMbs) {
         if (numFreeCpus >= numCpus && freeMemInMbs >= memInMbs) {
             return true;
