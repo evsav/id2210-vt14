@@ -1,6 +1,5 @@
 package common.simulation.scenarios;
 
-import java.util.Random;
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 
 @SuppressWarnings("serial")
@@ -50,8 +49,8 @@ public class NormalScenario extends Scenario {
             };
             
             process0.start();
-            process1.startAfterTerminationOf(500, process0);
-            terminateProcess.startAfterTerminationOf(100 * 1000, process1);
+            process1.startAfterTerminationOf(200, process0);
+            terminateProcess.startAfterTerminationOf(1000 * 1000, process1);
         }
     };
 
