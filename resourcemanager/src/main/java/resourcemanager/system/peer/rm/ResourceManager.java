@@ -48,7 +48,9 @@ public final class ResourceManager extends ComponentDefinition {
     Positive<TManSamplePort> tmanPort = positive(TManSamplePort.class);
 
     //--to work with Tman
-    List<PeerDescriptor> neighbours = new LinkedList<PeerDescriptor>();
+    private List<PeerDescriptor> neighboursRes;
+    private List<PeerDescriptor> neighboursCpu;
+    private List<PeerDescriptor> neighboursMem;
 
     private Address self;
     private RmConfiguration configuration;
@@ -95,6 +97,10 @@ public final class ResourceManager extends ComponentDefinition {
             long period = configuration.getPeriod();
             availableResources = init.getAvailableResources();
 
+            neighboursRes = new LinkedList<PeerDescriptor>();
+            neighboursCpu = new LinkedList<PeerDescriptor>();
+            neighboursMem = new LinkedList<PeerDescriptor>();
+
             probes = new ConcurrentHashMap<Long, LinkedList<RequestResources.Response>>();
             jobQueue = new ConcurrentHashMap<Long, RequestResource>();
             inProgress = new HashMap<Long, RequestResource>();
@@ -113,11 +119,11 @@ public final class ResourceManager extends ComponentDefinition {
             // pick a random neighbour to ask for index updates from. 
             // You can change this policy if you want to.
             // Maybe a gradient neighbour who is closer to the leader?
-            if (neighbours.isEmpty()) {
-                return;
-            }
-            //Address dest = neighbours.get(random.nextInt(neighbours.size()));
-            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
+//            if (neighbours.isEmpty()) {
+//                return;
+//            }
+//            //Address dest = neighbours.get(random.nextInt(neighbours.size()));
+//            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
         }
     };
 
@@ -129,14 +135,13 @@ public final class ResourceManager extends ComponentDefinition {
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
             if (!success && !pendingJobs.contains(event)) {
-                //put the job in the job queue
+                //put the job in the job queue, and update the queue size
                 pendingJobs.add(event);
                 availableResources.setQueueSize(pendingJobs.size());
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
                 return;
             }
 
-            //Job job = pendingJobs.remove();
             Snapshot.record(event.getJobId());
 
             //reserve the resources
@@ -166,7 +171,6 @@ public final class ResourceManager extends ComponentDefinition {
             System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-//            Snapshot.record(job.getJobId());
 
             if (pendingJobs.size() > 0) {
                 job = pendingJobs.peek();
@@ -202,7 +206,7 @@ public final class ResourceManager extends ComponentDefinition {
 
             System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
 
-            List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(neighbours);
+            List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(getList(event.getGradientType()));
 
             if (copy.size() > 0) {
                 Snapshot.record(event.getId());
@@ -224,37 +228,37 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(TManSample event) {
 
-            //System.out.println("[RMMANAGER]: TMAN SAMPLE RECEIVED");
-            neighbours.clear();
-            neighbours.addAll(event.getSample());
-
-            //printList(neighbours);
+            updateSample(event.getGradientType(), event.getSample());
         }
     };
 
-    private Address findLeastLoaded(LinkedList<RequestResources.Response> list) {
+    private void updateSample(int gradientType, List<PeerDescriptor> sample) {
 
-        int load = 0;
-        Address peer = null;
-
-        for (RequestResources.Response res : list) {
-            int total = res.getNumCpus() + res.getAmountMemInMb();
-            if (total > load) {
-                load = total;
-                peer = res.getSource();
-            }
+        switch (gradientType) {
+            case 1:
+                this.neighboursRes.clear();
+                this.neighboursRes.addAll(sample);
+                break;
+            case 2:
+                this.neighboursCpu.clear();
+                this.neighboursCpu.addAll(sample);
+                break;
+            case 3:
+                this.neighboursMem.clear();
+                this.neighboursMem.addAll(sample);
         }
-
-        return peer;
     }
-
-    private void printList(List<PeerDescriptor> list) {
-        System.out.println("PEERS RECEIVED ");
-
-        for (PeerDescriptor peer : list) {
-            System.out.println("ID " + peer.getAddress().getId() + " RESOURCES COMBO " + (peer.getCpus() + peer.getMemInMB()));
+    
+    private List<PeerDescriptor> getList(int gradientType){
+        switch(gradientType){
+            case 1:
+                return this.neighboursRes;
+            case 2:
+                return this.neighboursCpu;
+            case 3:
+                return this.neighboursMem;
         }
-        System.out.println();
+        
+        return null;
     }
-
 }
