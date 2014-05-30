@@ -13,6 +13,10 @@ public class PeerChurnScenario extends Scenario {
         super(scenario);
     }
 
+    /**
+     * defines a scenario, where peer churn is introduced in the system There is
+     * no peer churn (or failures) in this scenario
+     */
     private static SimulationScenario scenario = new SimulationScenario() {
         {
 
@@ -26,18 +30,28 @@ public class PeerChurnScenario extends Scenario {
                 }
             };
 
+            /**
+             * raising 5000 jobs, requesting either a combination of resources,
+             * or a single resource based on the user selection. The
+             * interarrival time is set to 300ms, in order to avoid job requests
+             * timing out. Each job has duration of 1 minute
+             */
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(300));
                     raise(5000, Operations.requestResources(),
                             uniform(0, Integer.MAX_VALUE),
-                            constant(2), constant(2000),
+                            constant(2), 
+                            constant(2000),
                             constant(1000 * 60),
-                            constant(1)//gradient type - combination
+                            constant(1)//gradient type, 1 combined resources, 2 cpu, 3 memory
                     );
                 }
             };
 
+            /**
+             * peer churn. 70 peers join the system, and 40 fail
+             */
             StochasticProcess churnProcess = new StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(500));
@@ -45,7 +59,7 @@ public class PeerChurnScenario extends Scenario {
                             uniform(0, Integer.MAX_VALUE),
                             constant(8), constant(12000)
                     );
-                    raise(30, Operations.peerFail,
+                    raise(40, Operations.peerFail,
                             uniform(0, Integer.MAX_VALUE));
                 }
             };

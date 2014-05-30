@@ -15,6 +15,9 @@ public class PeerFailScenario extends Scenario {
         super(scenario);
     }
 
+    /**
+     * this scenario introduces peer failures in the system. No new nodes join the system
+     */
     private static SimulationScenario scenario = new SimulationScenario() {
         {
 
@@ -35,7 +38,7 @@ public class PeerFailScenario extends Scenario {
                             uniform(0, Integer.MAX_VALUE),
                             constant(2), constant(2000),
                             constant(1000 * 60),
-                            constant(1)//gradient type - combination
+                            constant(1) //gradient type, 1 resources combined, 2 cpu, 3 memory
                     );
                 }
             };
