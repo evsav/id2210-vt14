@@ -48,7 +48,7 @@ public class Snapshot {
         str += reportDetails();
         str += "###\n";
 
-        System.out.println(str);
+        //System.out.println(str);
         FileIO.append(str, FILENAME);
     }
 
@@ -61,7 +61,7 @@ public class Snapshot {
 
         String line = "JOB, " + jobid + ", start, " + start + ", end, " + end
                 + ", duration, " + (end - start) + "\n";
-        System.out.print(line);
+        //System.out.print(line);
         FileIO.append(line, FILENAME);
     }
 

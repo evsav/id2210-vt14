@@ -57,7 +57,6 @@ public final class ResourceManager extends ComponentDefinition {
     Random random;
     private AvailableResources availableResources;
 
-    private final int PROBES = 2;
     private ConcurrentHashMap<Long, LinkedList<RequestResources.Response>> probes;
     private ConcurrentHashMap<Long, RequestResource> jobQueue;
     private Map<Long, RequestResource> inProgress;
@@ -79,10 +78,8 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleInit, control);
         subscribe(handleCyclonSample, cyclonSamplePort);
         subscribe(handleRequestResource, indexPort);
-        subscribe(handleUpdateTimeout, timerPort);
         subscribe(releaseResources, timerPort);
         subscribe(jobDaemon, networkPort);
-        subscribe(handleJobComplete, networkPort);
         subscribe(handleTManSample, tmanPort);
     }
 
@@ -112,21 +109,9 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
-    Handler<UpdateTimeout> handleUpdateTimeout = new Handler<UpdateTimeout>() {
-        @Override
-        public void handle(UpdateTimeout event) {
-
-            // pick a random neighbour to ask for index updates from. 
-            // You can change this policy if you want to.
-            // Maybe a gradient neighbour who is closer to the leader?
-//            if (neighbours.isEmpty()) {
-//                return;
-//            }
-//            //Address dest = neighbours.get(random.nextInt(neighbours.size()));
-//            PeerDescriptor dest = neighbours.get(random.nextInt(neighbours.size()));
-        }
-    };
-
+    /**
+     * Handles the execution of jobs that are either in the pending job queue, or not
+     */
     Handler<Job> jobDaemon = new Handler<Job>() {
 
         @Override
@@ -134,8 +119,10 @@ public final class ResourceManager extends ComponentDefinition {
 
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
+            //if there are no available resources and the job is new, put it in the queue
+            //and update the queue size
             if (!success && !pendingJobs.contains(event)) {
-                //put the job in the job queue, and update the queue size
+
                 pendingJobs.add(event);
                 availableResources.setQueueSize(pendingJobs.size());
                 System.out.println("WORKER " + self + " QUEUE SIZE " + pendingJobs.size());
@@ -152,9 +139,8 @@ public final class ResourceManager extends ComponentDefinition {
                 availableResources.setQueueSize(pendingJobs.size());
             }
 
-            System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
+            //System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
-            //logger.info("Sleeping {} milliseconds...", job.getJobDuration());
             ScheduleTimeout st = new ScheduleTimeout(event.getTimetoholdResource());
             st.setTimeoutEvent(new JobTimeout(st, event));
             trigger(st, timerPort);
@@ -168,28 +154,18 @@ public final class ResourceManager extends ComponentDefinition {
 
             Job job = event.getJob();
 
-            System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
+            //System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
 
+            /*
+                if there are more jobs waiting in the queue, trigger jobDaemon
+                to handle them
+            */
             if (pendingJobs.size() > 0) {
                 job = pendingJobs.peek();
                 trigger(job, networkPort);
             }
-
-            //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
-        }
-    };
-
-    Handler<JobComplete> handleJobComplete = new Handler<JobComplete>() {
-
-        @Override
-        public void handle(JobComplete event) {
-
-            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");
-            probes.remove(event.getJobId());
-            jobQueue.remove(event.getJobId());
-            inProgress.remove(event.getJobId());
         }
     };
 
@@ -204,7 +180,7 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(RequestResource event) {
 
-            System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
+            //System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
 
             List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(getList(event.getGradientType()));
 
@@ -214,7 +190,7 @@ public final class ResourceManager extends ComponentDefinition {
                 //assign the job to the best peer
                 PeerDescriptor peer = copy.get(0); //copy.get(random.nextInt(copy.size()));
                 copy.remove(peer);
-                System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
+                //System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
 
                 Job assign = new Job(self, peer.getAddress(), event.getNumCpus(),
                         event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
@@ -232,6 +208,13 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
+    /**
+     * update the corresponding list of neighbours, depending on the gradient type
+     * 1 is combined resources, 2 is cpu, 3 is memory. The gradient type is defined
+     * in the scenario, as a fifth parameter to the scochastic process
+     * @param gradientType
+     * @param sample 
+     */
     private void updateSample(int gradientType, List<PeerDescriptor> sample) {
 
         switch (gradientType) {
