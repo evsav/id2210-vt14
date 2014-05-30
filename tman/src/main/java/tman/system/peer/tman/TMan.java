@@ -103,17 +103,12 @@ public final class TMan extends ComponentDefinition {
     private void buildGradient(int gradientType) {
         // merge cyclonPartners into TManPartners
         List<PeerDescriptor> partners = getList(gradientType);
-        
-        //updateSnapshot(gradientType, partners);
-        
+                
         partners = merge(partners, cyclonPartners);
-        //Collections.sort(partners, getComparator(gradientType, self, availableResources));
-        //Collections.sort(tmanPartners, getComparator(100, null, null));
 
         if (!partners.isEmpty()) {
             partners = queueBasedDeduplication(new LinkedList<PeerDescriptor>(partners));
             Collections.sort(partners, getComparator(gradientType, self, availableResources));
-            //Collections.sort(partners, getComparator(100, null, null));
 
             int randomIndex = (((int) partners.size() / 3) == 0)
                     ? 0 : new Random().nextInt((int) partners.size() / 3);
@@ -126,16 +121,13 @@ public final class TMan extends ComponentDefinition {
             partners = merge(partners, md);
 
             Collections.sort(partners, getComparator(gradientType, peer.getAddress(), peer.getResources()));
-            //Collections.sort(partners, getComparator(100, null, null));
-
             DescriptorBuffer buffer = new DescriptorBuffer(self, partners);
-            //tmanPartners = merge(tmanPartners, buffer.getDescriptors());
 
+            //send a gossip message to the selected peer
             trigger(new ExchangeMsg.Request(UUID.randomUUID(), buffer, self, peer.getAddress(), gradientType), networkPort);
 
             // Publish the sample to connected components
             List<PeerDescriptor> toSend = new LinkedList<PeerDescriptor>(partners.subList(0, randomIndex));
-            //Collections.sort(toSend, new ResourceComparator(peer.getAddress(), peer.getResources()));
 
             trigger(new TManSample(toSend, gradientType), tmanPort);
         }
@@ -182,13 +174,12 @@ public final class TMan extends ComponentDefinition {
             }
 
             Collections.sort(partners, getComparator(gradientType, q.getAddress(), q.getResources()));
-            //Collections.sort(partners, getComparator(100, null, null));
 
             DescriptorBuffer debuffer = new DescriptorBuffer(self, partners);
+            //send a message back to the peer that initiated the gossip
             trigger(new ExchangeMsg.Response(event.getRequestId(), debuffer, self, event.getSource(), gradientType), networkPort);
 
             setList(gradientType, merge(partners, buffer));
-            //partners = merge(partners, buffer);
         }
     };
 
@@ -197,13 +188,11 @@ public final class TMan extends ComponentDefinition {
         public void handle(ExchangeMsg.Response event) {
             int gradientType = event.getGradientType();
 
-            //System.out.println("TMAN PARTNERS RESPONSE TMAN PARTNERS RESPONSE");
             List<PeerDescriptor> buffer = event.getSelectedBuffer().getDescriptors();
 
             List<PeerDescriptor> partners = getList(gradientType);
             partners = merge(partners, buffer);
             Collections.sort(partners, getComparator(gradientType, self, availableResources));
-            //Collections.sort(partners, getComparator(100, null, null));
         }
     };
 
@@ -251,7 +240,7 @@ public final class TMan extends ComponentDefinition {
     }
 
     /**
-     * merges two lists, removes duplicates
+     * merges two lists and removes duplicates
      */
     private List<PeerDescriptor> merge(List<PeerDescriptor> l1, List<PeerDescriptor> l2) {
 
@@ -261,6 +250,13 @@ public final class TMan extends ComponentDefinition {
         return l1;
     }
 
+    /**
+     * Performs list deduplication. Depending on the list size it executes a faster
+     * version of the basic deduplication function
+     * 
+     * @param input - The list to be deduplicated
+     * @return 
+     */
     private List<PeerDescriptor> queueBasedDeduplication(List<PeerDescriptor> input) {
 
         int size = input.size();
@@ -271,6 +267,13 @@ public final class TMan extends ComponentDefinition {
         return this.FastDeduplication(input);
     }
 
+    /**
+     * inspects duplicate elements - PeerDescriptors in the input list and keeps
+     * those that have the smallest queue size. 
+     * 
+     * @param input - The list to be deduplicated
+     * @return - The deduplicated list
+     */
     private List<PeerDescriptor> slowDeduplication(List<PeerDescriptor> input) {
 
         List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(input);
@@ -295,8 +298,8 @@ public final class TMan extends ComponentDefinition {
      * those that have the smallest queue size. Performs loop tiling for list
      * scanning performance
      *
-     * @param input the peerdescriptors list
-     * @return the deduplicated list
+     * @param input - The list to be deduplicated
+     * @return - The deduplicated list
      */
     private List<PeerDescriptor> FastDeduplication(List<PeerDescriptor> input) {
 
@@ -323,6 +326,14 @@ public final class TMan extends ComponentDefinition {
         return new LinkedList<PeerDescriptor>(clear.values());
     }
 
+    /**
+     * selects the corresponding comparator depending on the current gradient
+     * 
+     * @param index - The current gradient
+     * @param address - The peer, the peer-comparison is based on
+     * @param resources - The peer's available resources
+     * @return 
+     */
     private CustomComparator getComparator(int index, Address address, AvailableResources resources) {
 
         switch (index) {
@@ -362,27 +373,5 @@ public final class TMan extends ComponentDefinition {
             case 3:
                 this.tmanPartnersMem = list;
         }
-    }
-    
-    private void updateSnapshot(int gradientType, List<PeerDescriptor> list){
-        
-//        switch(gradientType){
-//            case 1:
-//                Snapshot.updateTManPartnersRes(self, list);
-//                break;
-//            case 2:
-//                Snapshot.updateTManPartnersCpu(self, list);
-//                break;
-//            case 3:
-//                Snapshot.updateTManPartnersMem(self, list);
-//        }
-    }
-
-    private void printList(List<PeerDescriptor> list) {
-        System.out.println("CURRENT LIST ");
-        for (PeerDescriptor peer : list) {
-            System.out.print((peer.getCpus() * peer.getMemInMB()) + " ");
-        }
-        System.out.println();
     }
 }

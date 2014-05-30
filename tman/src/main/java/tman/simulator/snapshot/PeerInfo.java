@@ -19,18 +19,6 @@ public class PeerInfo {
         this.cyclonPartners = new ArrayList<Address>();
     }
 
-    public void updateTManPartnersRes(List<PeerDescriptor> partners) {
-        this.tmanPartnersRes = partners;
-    }
-
-    public void updateTManPartnersCpu(List<PeerDescriptor> partners) {
-        this.tmanPartnersCpu = partners;
-    }
-
-    public void updateTManPartnersMem(List<PeerDescriptor> partners) {
-        this.tmanPartnersMem = partners;
-    }
-
     public void updateCyclonPartners(List<Address> partners) {
         this.cyclonPartners = partners;
     }

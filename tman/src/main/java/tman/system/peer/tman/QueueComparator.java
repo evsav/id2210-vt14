@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package tman.system.peer.tman;
 
 import cyclon.system.peer.cyclon.PeerDescriptor;
@@ -13,6 +9,15 @@ import cyclon.system.peer.cyclon.PeerDescriptor;
  */
 public class QueueComparator extends CustomComparator<PeerDescriptor> {
 
+    /**
+     * Compares two peerdescriptors based on the queue size. It is used in the
+     * building of the overlay, when the other comparators cannot decide which peer has
+     * the more available resources
+     * 
+     * @param p1 - The first peer - peerDescriptor
+     * @param p2 - The second peer - peerDescriptor
+     * @return 
+     */
     @Override
     public int compare(PeerDescriptor p1, PeerDescriptor p2) {
 

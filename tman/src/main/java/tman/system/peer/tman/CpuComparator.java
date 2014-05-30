@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package tman.system.peer.tman;
 
 import common.peer.AvailableResources;
@@ -23,6 +19,14 @@ public class CpuComparator extends CustomComparator<PeerDescriptor> {
         this.resources = resources;
     }
 
+    /**
+     * Compares two peers based on the free cpus they have. It is used in 
+     * the building of the overlay
+     * 
+     * @param p1 - The first peer
+     * @param p2 - The second peer
+     * @return 
+     */
     @Override
     public int compare(PeerDescriptor p1, PeerDescriptor p2) {
 
