@@ -38,6 +38,9 @@ public class PeerFailScenario extends Scenario {
                 }
             };
 
+            /**
+             * this process simulates peer failures. It kills 40 peers
+             */
             StochasticProcess failPeersProcess = new StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(100));
@@ -54,10 +57,11 @@ public class PeerFailScenario extends Scenario {
             };
             
             process0.start();
-            process1.startAfterTerminationOf(2000, process0);
-            //introduce peer failure in the system
-            failPeersProcess.startAfterTerminationOf(18 * 1000, process0);
-            terminateProcess.startAfterTerminationOf(100 * 1000, process1);
+            process1.startAfterTerminationOf(500, process0);
+            
+            //introduce peer failure in the system after 10 seconds
+            failPeersProcess.startAfterTerminationOf(10 * 1000, process0);
+            terminateProcess.startAfterTerminationOf(1000 * 1000, process1);
         }
     };
 }
