@@ -60,7 +60,7 @@ public class Snapshot {
 
         String line = "JOB, " + jobid + ", start, " + start + ", end, " + end
                 + ", duration, " + (end - start) + "\n";
-        System.out.print(line);
+        //System.out.print(line);
         FileIO.append(line, FILENAME);
     }
 

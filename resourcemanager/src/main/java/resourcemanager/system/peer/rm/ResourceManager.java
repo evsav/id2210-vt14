@@ -82,7 +82,6 @@ public final class ResourceManager extends ComponentDefinition {
         subscribe(handleResourceAllocationRequest, networkPort);
         subscribe(handleResourceAllocationResponse, networkPort);
         subscribe(jobDaemon, networkPort);
-        subscribe(handleJobComplete, networkPort);
     }
 
     Handler<RmInit> handleInit = new Handler<RmInit>() {
@@ -160,12 +159,16 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
+    /**
+     * this handler is the main part of the worker. It is responsible for handling
+     * incoming jobs, by either executing them, or putting them in the queue for later
+     * execution
+     */
     Handler<Job> jobDaemon = new Handler<Job>() {
 
         @Override
         public void handle(Job event) {
 
-            //put the job in the job queue
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
             //if there are no resources available, and the job is new, put it in the queue
@@ -177,14 +180,13 @@ public final class ResourceManager extends ComponentDefinition {
 
             //record the timestamp the moment the resources are found, and before are allocated
             Snapshot.record(event.getJobId());
+            
             //reserve the resources
             availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
 
             if (!pendingJobs.isEmpty()) {
                 pendingJobs.remove();
             }
-
-            System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
             ScheduleTimeout st = new ScheduleTimeout(event.getJobDuration());
             st.setTimeoutEvent(new JobTimeout(st, event));
@@ -199,35 +201,19 @@ public final class ResourceManager extends ComponentDefinition {
 
             Job job = event.getJob();
 
-            System.out.println("\nWORKER " + self + " FINISHED JOB " + job.getJobId() + "\n");
             //release the resources
             availableResources.release(job.getNumCpus(), job.getAmountMemInMb());
-            //Snapshot.record(job.getJobId());
 
             if (pendingJobs.size() > 0) {
                 job = pendingJobs.peek();
                 trigger(job, networkPort);
             }
-            //trigger(new JobComplete(self, job.getSource(), job.getJobId()), networkPort);
-        }
-    };
-
-    Handler<JobComplete> handleJobComplete = new Handler<JobComplete>() {
-
-        @Override
-        public void handle(JobComplete event) {
-
-            System.out.println(self + " JOB COMPLETE. REMOVE IT FROM THE QUEUE");
-            probes.remove(event.getJobId());
-            jobQueue.remove(event.getJobId());
-            inProgress.remove(event.getJobId());
         }
     };
 
     Handler<CyclonSample> handleCyclonSample = new Handler<CyclonSample>() {
         @Override
         public void handle(CyclonSample event) {
-            //System.out.println("Received samples: " + event.getSample().size());
 
             //receive a new list of neighbours
             neighbours.clear();
@@ -239,10 +225,7 @@ public final class ResourceManager extends ComponentDefinition {
         @Override
         public void handle(RequestResource event) {
 
-            System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
-
             jobQueue.put(event.getId(), event);
-//            Set<Entry<Long, RequestResource>> set = jobQueue.entrySet();
 
             int index = 0;
             int bound = (neighbours.size() < PROBES) ? neighbours.size() : PROBES;
@@ -254,26 +237,13 @@ public final class ResourceManager extends ComponentDefinition {
             //probe bound neighbours
             while (index++ < bound) {
                 Address peer = copy.get(random.nextInt(copy.size()));
-                //System.out.println("JOB " + event.getId() + " PROBING " + peer.getId());
+
                 RequestResources.Request req = new RequestResources.Request(self, peer, event.getNumCpus(), event.getMemoryInMbs(), event.getId());
                 trigger(req, networkPort);
                 copy.remove(peer);
             }
         }
     };
-
-//    //not used
-//    private int findAvailability(LinkedList<RequestResources.Response> list) {
-//
-//        int success = 0;
-//
-//        for (RequestResources.Response res : list) {
-//            if (res.getSuccess()) {
-//                success++;
-//            }
-//        }
-//        return success;
-//    }
 
     /**
      * finds the least loaded peer, based on the queue size
