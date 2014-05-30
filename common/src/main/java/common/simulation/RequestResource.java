@@ -9,12 +9,14 @@ public final class RequestResource extends Event {
     private final int memoryInMbs;
     private final int timeToHoldResource;
     private boolean scheduled;
+    private final int gradientType;
 
-    public RequestResource(long id, int numCpus, int memoryInMbs, int timeToHoldResource) {
+    public RequestResource(long id, int numCpus, int memoryInMbs, int timeToHoldResource, int gradientType) {
         this.id = id;
         this.numCpus = numCpus;
         this.memoryInMbs = memoryInMbs;
         this.timeToHoldResource = timeToHoldResource;
+        this.gradientType = gradientType;
     }
 
     public long getId() {
@@ -39,5 +41,9 @@ public final class RequestResource extends Event {
     
     public boolean isScheduled(){
         return this.scheduled;
+    }
+    
+    public int getGradientType(){
+        return this.gradientType;
     }
 }

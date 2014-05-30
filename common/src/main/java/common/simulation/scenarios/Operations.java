@@ -6,7 +6,7 @@ import common.simulation.RequestResource;
 import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation;
 import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation1;
 import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation3;
-import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation4;
+import se.sics.kompics.p2p.experiment.dsl.adaptor.Operation5;
 import se.sics.kompics.p2p.experiment.dsl.events.TerminateExperiment;
 
 @SuppressWarnings("serial")
@@ -35,14 +35,19 @@ public class Operations {
         }
     };
 
-    public static Operation4<RequestResource, Long, Long, Long, Long> requestResources() {
-        return new Operation4<RequestResource, Long, Long, Long, Long>() {
+    public static Operation5<RequestResource, Long, Long, Long, Long, Long> requestResources() {
+        return new Operation5<RequestResource, Long, Long, Long, Long, Long>() {
+            
+            private static final long serialVersionUID = 8051544106169702026L;
+            
             @Override
             public RequestResource generate(Long id, Long numCpus, Long memInMbs,
-                    Long timeToHoldResourceInMilliSecs) {
+                    Long timeToHoldResourceInMilliSecs, Long gradientType) {
+                
                 return new RequestResource(id, numCpus.intValue(),
                         memInMbs.intValue(),
-                        timeToHoldResourceInMilliSecs.intValue());
+                        timeToHoldResourceInMilliSecs.intValue(),
+                        gradientType.intValue());
             }
         };
     }

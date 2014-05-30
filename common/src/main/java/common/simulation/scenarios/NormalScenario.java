@@ -4,7 +4,7 @@ import java.util.Random;
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
 
 @SuppressWarnings("serial")
-public class Scenario1 extends Scenario {
+public class NormalScenario extends Scenario {
 
     private static SimulationScenario scenario = new SimulationScenario() {
         {
@@ -28,7 +28,8 @@ public class Scenario1 extends Scenario {
                             uniform(0, Integer.MAX_VALUE),
                             constant(2), 
                             constant(2000), 
-                            constant(1000 * 60)
+                            constant(1000 * 60),
+                            constant(1)//gradient type - combination
                     );
                 }
             };
@@ -55,7 +56,7 @@ public class Scenario1 extends Scenario {
     };
 
     // -------------------------------------------------------------------
-    public Scenario1() {
+    public NormalScenario() {
         super(scenario);
     }
 }
