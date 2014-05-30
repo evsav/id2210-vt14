@@ -7,24 +7,44 @@ import se.sics.kompics.address.Address;
 
 public class PeerInfo {
 
-    private List<PeerDescriptor> tmanPartners;
+    private List<PeerDescriptor> tmanPartnersRes;
+    private List<PeerDescriptor> tmanPartnersCpu;
+    private List<PeerDescriptor> tmanPartnersMem;
     private List<Address> cyclonPartners;
 
     public PeerInfo() {
-        this.tmanPartners = new ArrayList<PeerDescriptor>();
+        this.tmanPartnersRes = new ArrayList<PeerDescriptor>();
+        this.tmanPartnersCpu = new ArrayList<PeerDescriptor>();
+        this.tmanPartnersMem = new ArrayList<PeerDescriptor>();
         this.cyclonPartners = new ArrayList<Address>();
     }
 
-    public void updateTManPartners(List<PeerDescriptor> partners) {
-        this.tmanPartners = partners;
+    public void updateTManPartnersRes(List<PeerDescriptor> partners) {
+        this.tmanPartnersRes = partners;
+    }
+
+    public void updateTManPartnersCpu(List<PeerDescriptor> partners) {
+        this.tmanPartnersCpu = partners;
+    }
+
+    public void updateTManPartnersMem(List<PeerDescriptor> partners) {
+        this.tmanPartnersMem = partners;
     }
 
     public void updateCyclonPartners(List<Address> partners) {
         this.cyclonPartners = partners;
     }
 
-    public List<PeerDescriptor> getTManPartners() {
-        return this.tmanPartners;
+    public List<PeerDescriptor> getTManPartnersRes() {
+        return this.tmanPartnersRes;
+    }
+
+    public List<PeerDescriptor> getTManPartnersCpu() {
+        return this.tmanPartnersCpu;
+    }
+
+    public List<PeerDescriptor> getTManPartnersMem() {
+        return this.tmanPartnersMem;
     }
 
     public List<Address> getCyclonPartners() {

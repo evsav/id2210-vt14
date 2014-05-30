@@ -14,12 +14,12 @@ import se.sics.kompics.address.Address;
  *
  * @author vangelis
  */
-public class ComparatorByCPU implements Comparator<PeerDescriptor> {
+public class CpuComparator extends CustomComparator<PeerDescriptor> {
 
     private Address self;
     private AvailableResources resources;
 
-    public ComparatorByCPU(Address address, AvailableResources resources) {
+    public CpuComparator(Address address, AvailableResources resources) {
         this.self = address;
         this.resources = resources;
     }
@@ -39,8 +39,10 @@ public class ComparatorByCPU implements Comparator<PeerDescriptor> {
             return -1;
         } else if (Math.abs(p1cpu - selfcpu) < Math.abs(p2cpu - selfcpu)) {
             return -1;
+        } else if (Math.abs(p1cpu - selfcpu) > Math.abs(p2cpu - selfcpu)) {
+            return 1;
         }
-        
+                
         return 0;                
     }
 }

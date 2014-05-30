@@ -14,37 +14,35 @@ import se.sics.kompics.address.Address;
  *
  * @author vangelis
  */
-public class ComparatorByResources implements Comparator<PeerDescriptor> {
+public class MemComparator extends CustomComparator<PeerDescriptor> {
 
     private Address self;
     private AvailableResources resources;
-    
-    public ComparatorByResources(Address address, AvailableResources resources){
+
+    public MemComparator(Address address, AvailableResources resources) {
         this.self = address;
         this.resources = resources;
     }
-    
+
     @Override
     public int compare(PeerDescriptor p1, PeerDescriptor p2) {
 
         assert (p1.getAddress().getId() == p2.getAddress().getId());
-        
-        int p1resources = p1.getMemInMB() + p1.getCpus();
-        int p2resources = p2.getMemInMB() + p2.getCpus();
-        int selfresources = this.resources.getFreeMemInMbs() + this.resources.getNumFreeCpus();
-        
-        if (p1resources < selfresources && p2resources > selfresources) {
+
+        int p1mem = p1.getMemInMB();
+        int p2mem = p2.getMemInMB();
+        int selfmem = this.resources.getFreeMemInMbs();
+
+        if (p1mem < selfmem && p2mem > selfmem) {
             return 1;
-        } 
-        else if (p1resources > selfresources && p2resources < selfresources){
+        } else if (p1mem > selfmem && p2mem < selfmem) {
             return -1;
-        }
-        else if (Math.abs(p1resources - selfresources) < Math.abs(p2resources - selfresources)) {
+        } else if (Math.abs(p1mem - selfmem) < Math.abs(p2mem - selfmem)) {
             return -1;
-        }
-        else if (Math.abs(p1resources - selfresources) > Math.abs(p2resources - selfresources)){
+        }else if (Math.abs(p1mem - selfmem) > Math.abs(p2mem - selfmem)) {
             return 1;
         }
+        
         return 0;
     }
 }

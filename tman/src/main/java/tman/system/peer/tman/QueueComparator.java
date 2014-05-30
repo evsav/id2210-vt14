@@ -6,13 +6,12 @@
 package tman.system.peer.tman;
 
 import cyclon.system.peer.cyclon.PeerDescriptor;
-import java.util.Comparator;
 
 /**
  *
  * @author vangelis
  */
-public class ComparatorByQueue implements Comparator<PeerDescriptor> {
+public class QueueComparator extends CustomComparator<PeerDescriptor> {
 
     @Override
     public int compare(PeerDescriptor p1, PeerDescriptor p2) {

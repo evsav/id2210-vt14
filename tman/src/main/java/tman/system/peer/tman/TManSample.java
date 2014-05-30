@@ -10,8 +10,11 @@ public class TManSample extends Event {
 
     List<PeerDescriptor> partners = new ArrayList<PeerDescriptor>();
 
-    public TManSample(List<PeerDescriptor> partners) {
+    private int gradientType;
+    
+    public TManSample(List<PeerDescriptor> partners, int gradientType) {
         this.partners = partners;
+        this.gradientType = gradientType;
     }
 
     public TManSample() {
@@ -19,5 +22,9 @@ public class TManSample extends Event {
 
     public List<PeerDescriptor> getSample() {
         return this.partners;
+    }
+    
+    public int getGradientType(){
+        return this.gradientType;
     }
 }

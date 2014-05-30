@@ -10,10 +10,10 @@ import se.sics.kompics.address.Address;
 /**
  * Make Node with Highest Id Leader in the Gradient
  */
-public class ComparatorById implements Comparator<Address> {
+public class IdComparator implements Comparator<Address> {
     Address self;
 
-    public ComparatorById(Address self) {
+    public IdComparator(Address self) {
         this.self = self;
     }
 

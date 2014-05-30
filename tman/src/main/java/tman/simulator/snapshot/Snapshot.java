@@ -24,14 +24,34 @@ public class Snapshot {
         peers.remove(address);
     }
 
-    public static void updateTManPartners(Address address, List<PeerDescriptor> partners) {
+    public static void updateTManPartnersRes(Address address, List<PeerDescriptor> partners) {
         PeerInfo peerInfo = peers.get(address);
 
         if (peerInfo == null) {
             return;
         }
 
-        peerInfo.updateTManPartners(partners);
+        peerInfo.updateTManPartnersRes(partners);
+    }
+
+    public static void updateTManPartnersCpu(Address address, List<PeerDescriptor> partners) {
+        PeerInfo peerInfo = peers.get(address);
+
+        if (peerInfo == null) {
+            return;
+        }
+
+        peerInfo.updateTManPartnersCpu(partners);
+    }
+
+    public static void updateTManPartnersMem(Address address, List<PeerDescriptor> partners) {
+        PeerInfo peerInfo = peers.get(address);
+
+        if (peerInfo == null) {
+            return;
+        }
+
+        peerInfo.updateTManPartnersMem(partners);
     }
 
     public static void updateCyclonPartners(Address address, List<Address> partners) {
@@ -75,7 +95,7 @@ public class Snapshot {
 
             str += "peer: " + peer;
             str += ", cyclon parters: " + peerInfo.getCyclonPartners();
-            str += ", tman parters: " + peerInfo.getTManPartners();
+            str += ", tman parters: " + peerInfo.getTManPartnersRes();
             str += "\n";
         }
 

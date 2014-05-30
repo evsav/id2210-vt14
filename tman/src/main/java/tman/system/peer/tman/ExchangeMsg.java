@@ -15,12 +15,14 @@ public class ExchangeMsg {
         private static final long serialVersionUID = 8493601671018888143L;
         private final UUID requestId;
         private final DescriptorBuffer randomBuffer;
+        private int gradientType;
 
         public Request(UUID requestId, DescriptorBuffer randomBuffer, Address source,
-                Address destination) {
+                Address destination, int gradientType) {
             super(source, destination);
             this.requestId = requestId;
             this.randomBuffer = randomBuffer;
+            this.gradientType = gradientType;
         }
 
         public UUID getRequestId() {
@@ -34,6 +36,10 @@ public class ExchangeMsg {
         public int getSize() {
             return 0;
         }
+        
+        public int getGradientType(){
+            return this.gradientType;
+        }
     }
 
     public static class Response extends Message {
@@ -41,11 +47,15 @@ public class ExchangeMsg {
         private static final long serialVersionUID = -5022051054665787770L;
         private final UUID requestId;
         private final DescriptorBuffer selectedBuffer;
+        private int gradientType;
 
-        public Response(UUID requestId, DescriptorBuffer selectedBuffer, Address source, Address destination) {
+        public Response(UUID requestId, DescriptorBuffer selectedBuffer, Address source,
+                Address destination, int gradientType) {
+            
             super(source, destination);
             this.requestId = requestId;
             this.selectedBuffer = selectedBuffer;
+            this.gradientType = gradientType;
         }
 
         public UUID getRequestId() {
@@ -58,6 +68,10 @@ public class ExchangeMsg {
 
         public int getSize() {
             return 0;
+        }
+        
+        public int getGradientType(){
+            return this.gradientType;
         }
     }
 
