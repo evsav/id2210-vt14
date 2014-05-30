@@ -43,6 +43,6 @@ public class MemComparator extends CustomComparator<PeerDescriptor> {
             return 1;
         }
         
-        return 0;
+        return new QueueComparator().compare(p1, p2);
     }
 }

@@ -95,25 +95,25 @@ public final class TMan extends ComponentDefinition {
         public void handle(TManSchedule event) {
 
             buildGradient(1);
-            buildGradient(2);
-            buildGradient(3);
+            //buildGradient(2);
+            //buildGradient(3);
         }
     };
 
     private void buildGradient(int gradientType) {
         // merge cyclonPartners into TManPartners
         List<PeerDescriptor> partners = getList(gradientType);
-
-        updateSnapshot(gradientType, partners);
+        
+        //updateSnapshot(gradientType, partners);
         
         partners = merge(partners, cyclonPartners);
-        Collections.sort(partners, getComparator(gradientType, self, availableResources));
+        //Collections.sort(partners, getComparator(gradientType, self, availableResources));
         //Collections.sort(tmanPartners, getComparator(100, null, null));
 
         if (!partners.isEmpty()) {
             partners = queueBasedDeduplication(new LinkedList<PeerDescriptor>(partners));
             Collections.sort(partners, getComparator(gradientType, self, availableResources));
-            Collections.sort(partners, getComparator(100, null, null));
+            //Collections.sort(partners, getComparator(100, null, null));
 
             int randomIndex = (((int) partners.size() / 3) == 0)
                     ? 0 : new Random().nextInt((int) partners.size() / 3);
@@ -126,7 +126,7 @@ public final class TMan extends ComponentDefinition {
             partners = merge(partners, md);
 
             Collections.sort(partners, getComparator(gradientType, peer.getAddress(), peer.getResources()));
-            Collections.sort(partners, getComparator(100, null, null));
+            //Collections.sort(partners, getComparator(100, null, null));
 
             DescriptorBuffer buffer = new DescriptorBuffer(self, partners);
             //tmanPartners = merge(tmanPartners, buffer.getDescriptors());
@@ -146,6 +146,15 @@ public final class TMan extends ComponentDefinition {
         public void handle(CyclonSample event) {
 
             cyclonPartners = event.getSample();
+            
+            tmanPartnersRes.clear();
+            tmanPartnersRes.addAll(cyclonPartners);
+            
+            tmanPartnersCpu.clear();
+            tmanPartnersCpu.addAll(cyclonPartners);
+            
+            tmanPartnersMem.clear();
+            tmanPartnersMem.addAll(cyclonPartners);
         }
     };
 
@@ -173,7 +182,7 @@ public final class TMan extends ComponentDefinition {
             }
 
             Collections.sort(partners, getComparator(gradientType, q.getAddress(), q.getResources()));
-            Collections.sort(partners, getComparator(100, null, null));
+            //Collections.sort(partners, getComparator(100, null, null));
 
             DescriptorBuffer debuffer = new DescriptorBuffer(self, partners);
             trigger(new ExchangeMsg.Response(event.getRequestId(), debuffer, self, event.getSource(), gradientType), networkPort);
@@ -194,7 +203,7 @@ public final class TMan extends ComponentDefinition {
             List<PeerDescriptor> partners = getList(gradientType);
             partners = merge(partners, buffer);
             Collections.sort(partners, getComparator(gradientType, self, availableResources));
-            Collections.sort(partners, getComparator(100, null, null));
+            //Collections.sort(partners, getComparator(100, null, null));
         }
     };
 
@@ -357,16 +366,16 @@ public final class TMan extends ComponentDefinition {
     
     private void updateSnapshot(int gradientType, List<PeerDescriptor> list){
         
-        switch(gradientType){
-            case 1:
-                Snapshot.updateTManPartnersRes(self, list);
-                break;
-            case 2:
-                Snapshot.updateTManPartnersCpu(self, list);
-                break;
-            case 3:
-                Snapshot.updateTManPartnersMem(self, list);
-        }
+//        switch(gradientType){
+//            case 1:
+//                Snapshot.updateTManPartnersRes(self, list);
+//                break;
+//            case 2:
+//                Snapshot.updateTManPartnersCpu(self, list);
+//                break;
+//            case 3:
+//                Snapshot.updateTManPartnersMem(self, list);
+//        }
     }
 
     private void printList(List<PeerDescriptor> list) {

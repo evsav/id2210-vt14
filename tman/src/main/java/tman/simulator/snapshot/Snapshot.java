@@ -24,35 +24,35 @@ public class Snapshot {
         peers.remove(address);
     }
 
-    public static void updateTManPartnersRes(Address address, List<PeerDescriptor> partners) {
-        PeerInfo peerInfo = peers.get(address);
-
-        if (peerInfo == null) {
-            return;
-        }
-
-        peerInfo.updateTManPartnersRes(partners);
-    }
-
-    public static void updateTManPartnersCpu(Address address, List<PeerDescriptor> partners) {
-        PeerInfo peerInfo = peers.get(address);
-
-        if (peerInfo == null) {
-            return;
-        }
-
-        peerInfo.updateTManPartnersCpu(partners);
-    }
-
-    public static void updateTManPartnersMem(Address address, List<PeerDescriptor> partners) {
-        PeerInfo peerInfo = peers.get(address);
-
-        if (peerInfo == null) {
-            return;
-        }
-
-        peerInfo.updateTManPartnersMem(partners);
-    }
+//    public static void updateTManPartnersRes(Address address, List<PeerDescriptor> partners) {
+//        PeerInfo peerInfo = peers.get(address);
+//
+//        if (peerInfo == null) {
+//            return;
+//        }
+//
+//        peerInfo.updateTManPartnersRes(partners);
+//    }
+//
+//    public static void updateTManPartnersCpu(Address address, List<PeerDescriptor> partners) {
+//        PeerInfo peerInfo = peers.get(address);
+//
+//        if (peerInfo == null) {
+//            return;
+//        }
+//
+//        peerInfo.updateTManPartnersCpu(partners);
+//    }
+//
+//    public static void updateTManPartnersMem(Address address, List<PeerDescriptor> partners) {
+//        PeerInfo peerInfo = peers.get(address);
+//
+//        if (peerInfo == null) {
+//            return;
+//        }
+//
+//        peerInfo.updateTManPartnersMem(partners);
+//    }
 
     public static void updateCyclonPartners(Address address, List<Address> partners) {
         PeerInfo peerInfo = peers.get(address);

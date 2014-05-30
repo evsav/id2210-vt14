@@ -7,7 +7,6 @@ package tman.system.peer.tman;
 
 import common.peer.AvailableResources;
 import cyclon.system.peer.cyclon.PeerDescriptor;
-import java.util.Comparator;
 import se.sics.kompics.address.Address;
 
 /**
@@ -42,7 +41,7 @@ public class CpuComparator extends CustomComparator<PeerDescriptor> {
         } else if (Math.abs(p1cpu - selfcpu) > Math.abs(p2cpu - selfcpu)) {
             return 1;
         }
-                
-        return 0;                
+             
+        return new QueueComparator().compare(p1, p2);
     }
 }

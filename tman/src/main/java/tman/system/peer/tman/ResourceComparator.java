@@ -44,6 +44,7 @@ public class ResourceComparator extends CustomComparator<PeerDescriptor> {
         else if (Math.abs(p1resources - selfresources) > Math.abs(p2resources - selfresources)){
             return 1;
         }
-        return 0;
+        
+        return new QueueComparator().compare(p1, p2);
     }
 }
