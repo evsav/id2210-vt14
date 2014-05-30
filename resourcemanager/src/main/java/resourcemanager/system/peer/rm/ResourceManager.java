@@ -3,7 +3,6 @@ package resourcemanager.system.peer.rm;
 import common.configuration.RmConfiguration;
 import common.peer.AvailableResources;
 import common.simulation.RequestResource;
-import cyclon.system.peer.cyclon.CyclonSample;
 import cyclon.system.peer.cyclon.CyclonSamplePort;
 import cyclon.system.peer.cyclon.PeerDescriptor;
 import java.util.Comparator;
@@ -76,7 +75,6 @@ public final class ResourceManager extends ComponentDefinition {
     public ResourceManager() {
 
         subscribe(handleInit, control);
-        subscribe(handleCyclonSample, cyclonSamplePort);
         subscribe(handleRequestResource, indexPort);
         subscribe(releaseResources, timerPort);
         subscribe(jobDaemon, networkPort);
@@ -110,7 +108,9 @@ public final class ResourceManager extends ComponentDefinition {
     };
 
     /**
-     * Handles the execution of jobs that are either in the pending job queue, or not
+     * The heart of the worker. This handler either executes the incoming jobs if 
+     * there are available resources, or places it in the job queue for a later 
+     * execution
      */
     Handler<Job> jobDaemon = new Handler<Job>() {
 
@@ -120,7 +120,7 @@ public final class ResourceManager extends ComponentDefinition {
             boolean success = availableResources.isAvailable(event.getNumCpus(), event.getAmountMemInMb());
 
             //if there are no available resources and the job is new, put it in the queue
-            //and update the queue size
+            //for a later execution and update the queue size
             if (!success && !pendingJobs.contains(event)) {
 
                 pendingJobs.add(event);
@@ -134,12 +134,15 @@ public final class ResourceManager extends ComponentDefinition {
             //reserve the resources
             availableResources.allocate(event.getNumCpus(), event.getAmountMemInMb());
 
+            /*
+                after the allocation of resources the job needs to be removed from the
+                queue, and the queue size in the available resources needs to be updated accordingly.
+                Queue size is vital for TMan to construct the overlay
+            */
             if (!pendingJobs.isEmpty()) {
                 pendingJobs.remove();
                 availableResources.setQueueSize(pendingJobs.size());
             }
-
-            //System.out.println("\nJOB " + event.getJobId() + " ASSIGNED TO " + self + "\n");
 
             ScheduleTimeout st = new ScheduleTimeout(event.getTimetoholdResource());
             st.setTimeoutEvent(new JobTimeout(st, event));
@@ -169,28 +172,26 @@ public final class ResourceManager extends ComponentDefinition {
         }
     };
 
-    Handler<CyclonSample> handleCyclonSample = new Handler<CyclonSample>() {
-        @Override
-        public void handle(CyclonSample event) {
-            // IGNORE CYCLON
-        }
-    };
 
+    /**
+     * This handler deals with incoming allocation requests from the application layer
+     */
     Handler<RequestResource> handleRequestResource = new Handler<RequestResource>() {
         @Override
         public void handle(RequestResource event) {
 
-            //System.out.println("Allocate resources: " + event.getNumCpus() + " + " + event.getMemoryInMbs());
-
             List<PeerDescriptor> copy = new LinkedList<PeerDescriptor>(getList(event.getGradientType()));
 
             if (copy.size() > 0) {
+                //record the timestamp when the allocation request arrives
                 Snapshot.record(event.getId());
 
-                //assign the job to the best peer
-                PeerDescriptor peer = copy.get(0); //copy.get(random.nextInt(copy.size()));
+                /*
+                    assign the job to the best peer. The TMan layer sends here
+                    the first four best workers
+                */                
+                PeerDescriptor peer = copy.get(0);
                 copy.remove(peer);
-                //System.out.println(self + " PICKING NEIGHBOUR " + peer.getAddress());
 
                 Job assign = new Job(self, peer.getAddress(), event.getNumCpus(),
                         event.getMemoryInMbs(), event.getTimeToHoldResource(), event.getId());
@@ -212,8 +213,9 @@ public final class ResourceManager extends ComponentDefinition {
      * update the corresponding list of neighbours, depending on the gradient type
      * 1 is combined resources, 2 is cpu, 3 is memory. The gradient type is defined
      * in the scenario, as a fifth parameter to the scochastic process
-     * @param gradientType
-     * @param sample 
+     * 
+     * @param gradientType - The current gradient type
+     * @param sample - The incoming sample from the TMan layer
      */
     private void updateSample(int gradientType, List<PeerDescriptor> sample) {
 
@@ -232,6 +234,13 @@ public final class ResourceManager extends ComponentDefinition {
         }
     }
     
+    /**
+     * Returns the neighbour list according to the gradient type.
+     * 1 is for combined resources, 2 is for cpu and 3 is for memory
+     * 
+     * @param gradientType - The current gradient type
+     * @return 
+     */
     private List<PeerDescriptor> getList(int gradientType){
         switch(gradientType){
             case 1:
