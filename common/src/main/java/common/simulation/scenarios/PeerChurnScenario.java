@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package common.simulation.scenarios;
 
 import se.sics.kompics.p2p.experiment.dsl.SimulationScenario;
@@ -38,7 +34,7 @@ public class PeerChurnScenario extends Scenario {
              */
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(300));
+                    eventInterArrivalTime(constant(100));
                     raise(5000, Operations.requestResources(),
                             uniform(0, Integer.MAX_VALUE),
                             constant(2), 
@@ -72,10 +68,10 @@ public class PeerChurnScenario extends Scenario {
             };
 
             process0.start();
-            process1.startAfterTerminationOf(2000, process0);
-            //introduce churn in the system
+            process1.startAfterTerminationOf(500, process0);
+            //introduce churn in the system after 10 seconds
             churnProcess.startAfterTerminationOf(10 * 1000, process0);
-            terminateProcess.startAfterTerminationOf(100 * 1000, process1);
+            terminateProcess.startAfterTerminationOf(1000 * 1000, process1);
         }
     };
 }
