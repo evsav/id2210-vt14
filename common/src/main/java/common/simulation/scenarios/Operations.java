@@ -49,6 +49,10 @@ public class Operations {
         };
     }
     
+    /**
+     * new operation declared to represent a batch request. The second last parameter is the number
+     * of the requested machines or tasks
+     */
     public static Operation5<BatchRequestResource, Long, Long, Long, Long, Long> batchRequest() {
         
         return new Operation5<BatchRequestResource, Long, Long, Long, Long, Long>() {

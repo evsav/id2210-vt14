@@ -19,20 +19,25 @@ public class PeerChurnScenario extends Scenario {
             SimulationScenario.StochasticProcess process0 = new SimulationScenario.StochasticProcess() {
                 {
                     eventInterArrivalTime(constant(1000));
-                    raise(100, Operations.peerJoin(),
+                    raise(100, Operations.peerJoin(), //add 100 peers in the system
                             uniform(0, Integer.MAX_VALUE),
                             constant(4), constant(6000)
                     );
                 }
             };
 
+            /**
+             * A composite request containing the number of tasks
+             */
             SimulationScenario.StochasticProcess process1 = new SimulationScenario.StochasticProcess() {
                 {
-                    eventInterArrivalTime(constant(300));
+                    eventInterArrivalTime(constant(100));
                     raise(5000, Operations.batchRequest(),
                             uniform(0, Integer.MAX_VALUE),
-                            constant(2), constant(2000), constant(2),
-                            constant(1000 * 60)
+                            constant(2), //the number of requested cpus
+                            constant(2000), //the amount of requested memory
+                            constant(2), //the number of tasks
+                            constant(1000 * 60) //total duration of the job (1 minute)
                     );
                 }
             };
@@ -58,7 +63,7 @@ public class PeerChurnScenario extends Scenario {
 
             process0.start();
             process1.startAfterTerminationOf(2000, process0);
-            //introduce churn in the system
+            //introduce peer churn in the system after 10 seconds
             churnProcess.startAfterTerminationOf(10 * 1000, process0);
             terminateProcess.startAfterTerminationOf(100 * 1000, process1);
         }
